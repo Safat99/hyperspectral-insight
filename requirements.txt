@@ -1,0 +1,11 @@
+numpy
+scipy
+pandas
+scikit-learn
+matplotlib
+tensorflow
+tqdm
+joblib
+h5py
+python-dotenv
+protobuf

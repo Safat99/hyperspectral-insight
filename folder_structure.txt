@@ -1,0 +1,120 @@
+hyperspectral-insight/
+│
+├── hyperspectral_insight/                # CORE PYTHON PACKAGE
+│   ├── __init__.py
+│   │
+│   ├── data/                             # Dataset + preprocessing
+│   │   ├── __init__.py
+│   │   ├── loaders.py                    # load_dataset(), cube_to_Xy()
+│   │   ├── patches.py                    # extract_patches(), create_patches()
+│   │   ├── normalization.py              # min-max, z-score per band
+│   │   └── pca.py                        # pca_reduce(), per-fold PCA
+│   │
+│   ├── band_selection/                   # ALL band selectors
+│   │   ├── __init__.py
+│   │   ├── ibra.py                       # compute_vif_pair(), ibra_band_selection()
+│   │   ├── gss.py                        # band_entropy(), gss_selection()
+│   │   ├── ibra_gss.py                   # combined selection
+│   │   ├── ssep.py                       # SSEP pipeline
+│   │   ├── srpa.py                       # SRPA (RF + redundancy)
+│   │   └── stability.py                  # hamming distance, similarity
+│   │
+│   ├── models/                           # All model architectures
+│   │   ├── __init__.py
+│   │   ├── shallow_cnn.py                # baseline 2D CNN
+│   │   ├── hyper3dnet.py                 # Hyper3DNet + original
+│   │   ├── hyper3dnet_lite.py            # Hyper3DNet-Lite
+│   │   ├── hybridsn.py                   # HybridSN
+│   │   └── conv3d_full.py                # issacs_build_final3dcnn()
+│   │
+│   ├── ssl/                              # SSL logic
+│   │   ├── __init__.py
+│   │   ├── split.py                      # split_ssl_data(), balanced split
+│   │   ├── pseudo_label.py               # run_pseudo_label_ssl(), balanced version
+│   │   └── ssl_utils.py                  # confidence filtering, merging utils
+│   │
+│   ├── evaluation/
+│   │   ├── __init__.py
+│   │   ├── metrics.py                    # OA, Kappa, Precision/Recall, F1
+│   │   ├── cross_validation.py           # unified CV runner
+│   │   └── visualization.py              # plot_history(), confusion matrices
+│   │
+│   └── utils/
+│       ├── __init__.py
+│       ├── seed.py                       # fix randomness
+│       ├── timelog.py                    # track execution time
+│       └── viz.py                        # false-color image, band stats
+│
+│
+├── experiments/                          # EXPERIMENT LAUNCH SCRIPTS (CLI)
+│   │
+│   ├── band_selection/                   # All band-selection experiments
+│   │   ├── run_ibra_only.py
+│   │   ├── run_gss_only.py
+│   │   ├── run_ibra_gss.py
+│   │   ├── run_ssep.py
+│   │   ├── run_srpa.py
+│   │   └── compare_selectors.py
+│   │
+│   ├── hyper3dnet/                       # Hyper3DNet experiments
+│   │   ├── run_h3dnet_pca.py
+│   │   ├── run_h3dnet_per_fold_pca.py
+│   │   ├── run_h3dnet_bandsel.py         # IBRA/GSS/SSEP/SRPA inside
+│   │   └── compare_pca_vs_bandsel.py
+│   │
+│   ├── hyper3dnetlite/                   # Hyper3DNet-Lite experiments
+│   │   ├── run_lite_ibra_gss.py
+│   │   ├── run_lite_per_fold.py
+│   │   ├── run_lite_fullbands.py
+│   │   └── compare_lite_vs_h3dnet.py
+│   │
+│   ├── conv3d_full/                      # full-band 3D CNN + attention
+│   │   ├── run_fullbands_3dcnn.py
+│   │   ├── run_3dcnn_ssep.py
+│   │   ├── run_3dcnn_srpa.py
+│   │   └── compare_3dcnn_vs_lite.py
+│   │
+│   ├── ssl/                              # SSL experiment scripts
+│   │   ├── run_ssl.py
+│   │   ├── run_ssl_balanced.py
+│   │   ├── tune_ssl_params.py
+│   │   └── compare_ssl_vs_supervised.py
+│   │
+│   └── baseline/                         # shallow CNN baselines
+│       ├── run_shallow_cnn.py
+│       ├── run_all_datasets.py
+│       └── compare_baselines.py
+│
+│
+├── slurm/                                # HPC JOB SCRIPTS
+│   ├── run_ssl.slurm
+│   ├── run_h3dnet.slurm
+│   ├── run_lite.slurm
+│   ├── run_3dcnn.slurm
+│   ├── band_selection_grid.slurm
+│   └── hyperparam_sweep.slurm
+│
+├── datasets/                              # raw .mat datasets (ignored in git)
+│   ├── indian_pines/
+│   ├── salinas/
+│   ├── pavia/
+│   └── ksc/
+│
+├── results/                               # CSVs, npys, saved models
+│   ├── band_selection/
+│   ├── hyper3dnet/
+│   ├── hyper3dnetlite/
+│   ├── conv3d_full/
+│   ├── ssl/
+│   └── baseline/
+│
+├── notebooks/                             # Jupyter notebooks
+│   ├── 01_dataset_exploration.ipynb
+│   ├── 02_band_selection_expts.ipynb
+│   ├── 03_h3dnet_expts.ipynb
+│   ├── 04_ssl_dev.ipynb
+│   ├── 05_model_comparison.ipynb
+│   └── archive/
+│
+├── requirements.txt
+└── README.md
