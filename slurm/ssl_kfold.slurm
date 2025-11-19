@@ -1,13 +1,16 @@
 #!/bin/bash
+#SBATCH --account=priority-binhaizhu       # Your PI's priority account
 #SBATCH --job-name=ssl_kfold
-#SBATCH --partition=gpu
-#SBATCH --gres=gpu:1               # 1 GPU
-#SBATCH --cpus-per-task=4
-#SBATCH --mem=32G
+#SBATCH --partition=gpupriority            # Correct GPU partition on Tempest
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=8                  # Do not exceed 16 cores per GPU
+#SBATCH --gpus-per-task=1                  # 1 A40 GPU
+#SBATCH --mem=60000                        # 60 GB RAM
 #SBATCH --time=24:00:00
 #SBATCH --output=logs/ssl/kfold_%A_%a.out
 #SBATCH --error=logs/ssl/kfold_%A_%a.err
-#SBATCH --array=0-2   # Indian Pines, Salinas, Pavia
+#SBATCH --array=0-2                        # datasets: IP, Salinas, Pavia
 
 # --------------------------
 # Dataset list for array
@@ -19,15 +22,26 @@ echo "Running SSL K-Fold for dataset: $DATASET"
 echo "SLURM Job ID: $SLURM_JOB_ID"
 echo "Array Task ID: $SLURM_ARRAY_TASK_ID"
 
-# Activate Conda env
-source ~/.bashrc
-conda activate hyperspectral-insight
+# --------------------------
+# Load modules
+# --------------------------
+module load Anaconda3/2020.07
+module load CUDA/11.1.1-GCC-10.2.0
 
-# Create log directory if missing
+# --------------------------
+# Activate Conda environment
+# --------------------------
+source activate hyperspectral-insight
+
+# --------------------------
+# Ensure log directory exists
+# --------------------------
 mkdir -p logs/ssl/
 
+# --------------------------
 # Run experiment
-python experiments/ssl/run_ssl_lite_ibra_gss_kfold.py \
+# --------------------------
+python3 experiments/ssl/run_ssl_lite_ibra_gss_kfold.py \
     --dataset $DATASET \
     --num_bands 20 \
     --patch 25 \
