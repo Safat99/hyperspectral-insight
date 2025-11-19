@@ -1,33 +1,35 @@
 import numpy as np
+import tensorflow as tf
 from typing import Dict, Tuple
 
 def merge_labeled_and_pseudo(
-    X_l: np.ndarray,
-    y_l_oh: np.ndarray,
-    X_p: np.ndarray,
-    y_p: np.ndarray,
+    X_labeled: np.ndarray,
+    y_labeled_oh: np.ndarray,
+    X_pseudo: np.ndarray,
+    y_pseudo: np.ndarray,
     n_classes: int,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
-    Merge labeled data (already one-hot) with new pseudo-labeled samples.
+    Merge newly pseudo-labeled samples into the labeled pool.
 
     Args:
-        X_l: (N_l, ...) current training data
-        y_l_oh: (N_l, C) one-hot labels
-        X_p: (N_p, ...) pseudo-labeled samples
-        y_p: (N_p,) integer pseudo-labels
+        X_labeled: (N_l, ...) current labeled data
+        y_labeled_oh: (N_l, C) current one-hot labels
+        X_pseudo: (N_p, ...) newly pseudo-labeled samples
+        y_pseudo: (N_p,) integer pseudo-labels
         n_classes: number of classes
 
     Returns:
-        X_new, y_new_oh
+        X_new: concatenated labeled + pseudo-labeled
+        y_new_oh: concatenated one-hot labels
     """
-    if X_p.shape[0] == 0:
-        return X_l, y_l_oh
+    if X_pseudo.shape[0] == 0:
+        return X_labeled, y_labeled_oh
 
-    y_p_oh = np.eye(n_classes, dtype=np.float32)[y_p]
+    y_pseudo_oh = tf.keras.utils.to_categorical(y_pseudo, num_classes=n_classes)
 
-    X_new = np.concatenate([X_l, X_p], axis=0)
-    y_new_oh = np.concatenate([y_l_oh, y_p_oh], axis=0)
+    X_new = np.concatenate([X_labeled, X_pseudo], axis=0)
+    y_new_oh = np.concatenate([y_labeled_oh, y_pseudo_oh], axis=0)
 
     return X_new, y_new_oh
 

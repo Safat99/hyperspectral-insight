@@ -1,14 +1,20 @@
+# hyperspectral_insight/ssl/pseudo_label.py
+
 import numpy as np
 import tensorflow as tf
 from typing import Tuple, Dict, List, Optional
 
 from hyperspectral_insight.ssl.ssl_utils import merge_labeled_and_pseudo
 
-def predict_proba_in_batches(model, X, batch_size=32):
-    """
-    Run model.predict on X in batches, return probabilities.
 
-    Works with any Keras model that outputs class probabilities.
+def predict_proba_in_batches(
+    model: tf.keras.Model,
+    X: np.ndarray,
+    batch_size: int = 32,
+) -> np.ndarray:
+    """
+    Run model.predict on X in batches to avoid memory spikes.
+    Assumes model outputs class probabilities.
     """
     n = X.shape[0]
     probs_list = []
@@ -18,8 +24,9 @@ def predict_proba_in_batches(model, X, batch_size=32):
         probs_list.append(p)
     return np.vstack(probs_list)
 
+
 def generate_pseudo_labels(
-    model,
+    model: tf.keras.Model,
     X_u: np.ndarray,
     confidence_threshold: float = 0.9,
     batch_size: int = 32,
@@ -77,7 +84,7 @@ def iterative_pseudo_labeling(
     verbose: int = 0,
 ) -> Tuple[tf.keras.Model, List[Dict]]:
     """
-    Simple iterative SSL training loop using pseudo-labeling.
+    Semi-supervised iterative pseudo-labeling loop for ONE fold.
 
     At each iteration:
         1) Train model on current labeled + pseudo-labeled set
@@ -88,13 +95,13 @@ def iterative_pseudo_labeling(
 
     Args:
         model_fn: function (input_shape, n_classes) -> compiled Keras model
-        X_l, y_l: initial labeled data
-        X_u: initial unlabeled data
-        X_val, y_val: validation set
+        X_l, y_l: initial labeled data for this fold (train split of 12% pool)
+        X_u: unlabeled pool (shared between folds, but passed as copy here)
+        X_val, y_val: validation set (val split of 12% pool)
         n_classes: number of classes (if None, inferred from y_l)
         n_iters: number of pseudo-labeling iterations
         confidence_threshold: minimum probability to accept pseudo-label
-        max_pseudo_per_iter: optional cap on new pseudo-labels each iteration
+        max_pseudo_per_iter: cap on new pseudo-labels per iteration
         batch_size: training and prediction batch size
         epochs_per_iter: Keras epochs per iteration
         verbose: passed to model.fit()
@@ -115,6 +122,7 @@ def iterative_pseudo_labeling(
 
     history = []
 
+    # Local copies so we don't modify caller arrays
     X_train = X_l.copy()
     y_train_oh = y_l_oh.copy()
     X_unlabeled = X_u.copy()
@@ -195,3 +203,78 @@ def iterative_pseudo_labeling(
             break
 
     return model, history
+
+
+def run_pseudo_label_ssl_fold(
+    build_model_fn,
+    X_labeled_fold: np.ndarray,
+    y_labeled_fold: np.ndarray,
+    X_unlabeled_pool: np.ndarray,
+    X_test: np.ndarray,
+    y_test: np.ndarray,
+    epochs_per_iter: int = 20,
+    batch_size: int = 16,
+    confidence_thresh: float = 0.9,
+    ssl_iters: int = 5,
+    val_frac: float = 0.2,
+) -> Dict:
+    """
+    High-level wrapper for a SINGLE FOLD:
+
+        - split fold-labeled into train/val (e.g. 80/20)
+        - run iterative pseudo-labeling with the shared unlabeled pool
+        - evaluate final model on TEST set (20% global holdout)
+
+    Args:
+        build_model_fn: (input_shape, n_classes) -> compiled model
+        X_labeled_fold, y_labeled_fold: fold's labeled pool
+        X_unlabeled_pool: full unlabeled pool (copied inside)
+        X_test, y_test: held-out test set
+        epochs_per_iter, batch_size, confidence_thresh, ssl_iters: SSL params
+        val_frac: fraction of fold labeled data used as validation
+
+    Returns:
+        dict with:
+            - OA_test: float
+            - history: list of per-iteration dicts
+    """
+    N = X_labeled_fold.shape[0]
+    n_classes = int(y_labeled_fold.max() + 1)
+
+    # shuffle within the fold
+    rng = np.random.RandomState(0)
+    perm = rng.permutation(N)
+    X_l = X_labeled_fold[perm]
+    y_l = y_labeled_fold[perm]
+
+    # fold's internal val split
+    split = int((1.0 - val_frac) * N)
+    X_train_l = X_l[:split]
+    y_train_l = y_l[:split]
+    X_val = X_l[split:]
+    y_val = y_l[split:]
+
+    model, history = iterative_pseudo_labeling(
+        model_fn=build_model_fn,
+        X_l=X_train_l,
+        y_l=y_train_l,
+        X_u=X_unlabeled_pool,
+        X_val=X_val,
+        y_val=y_val,
+        n_classes=n_classes,
+        n_iters=ssl_iters,
+        confidence_threshold=confidence_thresh,
+        batch_size=batch_size,
+        epochs_per_iter=epochs_per_iter,
+        verbose=0,
+    )
+
+    # Final evaluation on global TEST set
+    probs = model.predict(X_test, verbose=0)
+    y_pred = probs.argmax(axis=1)
+    OA_test = (y_pred == y_test).mean()
+
+    return {
+        "OA_test": float(OA_test),
+        "history": history,
+    }

@@ -1,5 +1,5 @@
 import numpy as np
-from sklearn.model_selection import KFold
+from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import OneHotEncoder
 
 from hyperspectral_insight.evaluation.metrics import compute_metrics
@@ -87,7 +87,7 @@ def kfold_cross_validation(
             - std_metrics
     """
 
-    kf = KFold(
+    kf = StratifiedKFold(
         n_splits=n_splits,
         shuffle=shuffle,
         random_state=random_state,
@@ -95,7 +95,7 @@ def kfold_cross_validation(
 
     fold_results = []
 
-    for fold_idx, (train_idx, val_idx) in enumerate(kf.split(X)):
+    for fold_idx, (train_idx, val_idx) in enumerate(kf.split(X, y)):
         print(f"\n[CV] Fold {fold_idx + 1}/{n_splits}")
 
         X_train, y_train = X[train_idx], y[train_idx]
