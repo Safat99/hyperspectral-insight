@@ -8,8 +8,8 @@ def build_shallow_cnn(input_shape, num_classes):
     """
     inp = layers.Input(shape=input_shape)
 
-    x = layers.Conv2D(32, 3, activation="relu")(inp)
-    x = layers.Conv2D(64, 3, activation="relu")(x)
+    x = layers.Conv2D(32, 3, activation="relu", padding="same")(inp)
+    x = layers.Conv2D(64, 3, activation="relu", padding="same")(x)
     x = layers.GlobalAveragePooling2D()(x)
     x = layers.Dense(64, activation="relu")(x)
     out = layers.Dense(num_classes, activation="softmax")(x)

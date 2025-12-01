@@ -19,7 +19,12 @@ def summarize_results():
             data = json.load(f)
 
         row = {"dataset": dataset}
-        row.update(data["mean_metrics"])
+        
+        if "mean_metrics" in data:
+            row.update(data["mean_metrics"])
+        else:
+            print(f"[WARNING] No mean_metrics found in {fname}")
+        
         rows.append(row)
 
     df = pd.DataFrame(rows)

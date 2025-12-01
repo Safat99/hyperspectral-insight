@@ -1,4 +1,4 @@
-from run_shallow_cnn import run_shallow_baseline
+from experiments.baseline.run_shallow_cnn import run_shallow_baseline
 
 DATASETS = [
     "indian_pines",
@@ -9,7 +9,12 @@ DATASETS = [
 
 def run_all():
     for ds in DATASETS:
-        run_shallow_baseline(ds, patch_size=25)
+        print(f"\n>>> Running dataset: {ds}")
+        run_shallow_baseline(
+            dataset_name=ds, 
+            patch_size=25,
+            save_dir= "results/baseline/"
+            )
         
 if __name__ == "__main__":
     run_all()

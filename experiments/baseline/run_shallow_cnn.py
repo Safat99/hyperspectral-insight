@@ -3,8 +3,8 @@ import json
 import numpy as np
 
 from hyperspectral_insight.data.loaders import load_dataset
-from hyperspectral_insight.data.patches import extract_patches
-from hyperspectral_insight.data.normalization import normalize_per_band
+from hyperspectral_insight.data.patches import create_patches
+from hyperspectral_insight.data.normalization import minmax_normalize
 
 from hyperspectral_insight.models.shallow_cnn import build_shallow_cnn
 from hyperspectral_insight.evaluation.cross_validation import kfold_cross_validation
@@ -25,10 +25,11 @@ def run_shallow_baseline(
     cube, gt = load_dataset(dataset_name)
 
     # 2) Normalize per band
-    cube_norm = normalize_per_band(cube)
+    cube_norm = minmax_normalize(cube)
 
     # 3) Extract patches
-    X, y = extract_patches(cube_norm, gt, patch_size)
+    print("Extracting patches...")
+    X, y = create_patches(cube_norm, gt, patch_size)
 
     # 4) Cross-validation
     print("Running cross-validation...")
@@ -38,8 +39,8 @@ def run_shallow_baseline(
         y=y,
         n_splits=n_splits,
         epochs=50,
-        batch_size=128,
-        verbose=0,
+        batch_size=32,
+        verbose=1,
     )
 
     # 5) Save results
