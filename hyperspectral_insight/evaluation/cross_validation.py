@@ -35,18 +35,18 @@ def train_one_fold(
     """
 
     n_classes = int(y_train.max() + 1)
-    y_train_oh = OneHotEncoder(sparse_output=False).fit_transform(
+    """y_train_oh = OneHotEncoder(sparse_output=False).fit_transform(
         y_train.reshape(-1, 1)
     )
     y_val_oh = OneHotEncoder(sparse_output=False).fit_transform(
         y_val.reshape(-1, 1)
-    )
+    )"""
 
     model = model_fn(input_shape=X_train.shape[1:], n_classes=n_classes)
 
     history = model.fit(
-        X_train, y_train_oh,
-        validation_data=(X_val, y_val_oh),
+        X_train, y_train,
+        validation_data=(X_val, y_val),
         epochs=epochs,
         batch_size=batch_size,
         verbose=verbose,
