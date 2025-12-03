@@ -35,6 +35,10 @@ echo "Python version: $(python3 --version)"
 echo "Running baseline for dataset = $1"
 
 python3 experiments/baseline/run_shallow_cnn.py --dataset "$1"
+# python3 experiments/baseline/run_shallow_cnn.py \
+    # --dataset pavia_centre \
+    # --patch 25 \
+    # --max_samples 2000
 
 echo "=== Job Completed ==="
 

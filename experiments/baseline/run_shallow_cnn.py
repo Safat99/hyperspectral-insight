@@ -16,6 +16,7 @@ def run_shallow_baseline(
     epochs: int = 50,
     lr: float = 1e-3,
     batch_size: int = 32,
+    max_samples_per_class: int = None,
     save_dir: str = "results/baseline/"
 ):
     """
@@ -32,7 +33,7 @@ def run_shallow_baseline(
 
     # 3) Extract patches
     print("Extracting patches...")
-    X, y = create_patches(cube_norm, gt, patch_size)
+    X, y = create_patches(cube_norm, gt, patch_size, max_samples_per_class=max_samples_per_class)
     print(f"  X: {X.shape}, y: {y.shape}, classes: {int(y.max()) + 1}")
 
     # 4) Cross-validation
@@ -76,6 +77,7 @@ if __name__ == "__main__":
     parser.add_argument("--epochs", type=int, default=50)
     parser.add_argument("--batch_size", type=int, default=32)
     parser.add_argument("--learning_rate", type=int, default=1e-4)
+    parser.add_argument("--max_samples", type=int, default=None)
 
     args = parser.parse_args()
 
@@ -85,4 +87,5 @@ if __name__ == "__main__":
         epochs=args.epochs,
         batch_size=args.batch_size,
         lr=args.learning_rate,
+        max_samples_per_class=args.max_samples,
     )
