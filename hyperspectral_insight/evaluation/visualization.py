@@ -68,6 +68,43 @@ def plot_training_history(history : dict, save_path=None, title="Training Histor
         plt.show()
         
 
+def plot_mean_std_history(histories, metric="loss", title="Mean Training Curve", save_path=None):
+    """
+    histories: list of dicts (each fold's history)
+    metric: "loss", "val_loss", "accuracy", "val_accuracy"
+    """
+
+    # Convert to array: shape (num_folds, epochs)
+    data = np.array([h[metric] for h in histories], dtype=float)
+    mean_curve = data.mean(axis=0)
+    std_curve = data.std(axis=0)
+
+    epochs = np.arange(1, len(mean_curve) + 1)
+
+    plt.figure(figsize=(8, 5))
+    plt.plot(epochs, mean_curve, label=f"Mean {metric}", color="blue")
+    plt.fill_between(
+        epochs,
+        mean_curve - std_curve,
+        mean_curve + std_curve,
+        alpha=0.3,
+        color="blue",
+        label="Std Dev"
+    )
+
+    plt.title(title)
+    plt.xlabel("Epoch")
+    plt.ylabel(metric)
+    plt.grid(True)
+    plt.legend()
+
+    if save_path:
+        plt.savefig(save_path, dpi=150)
+    else:
+        plt.show()
+
+
+
 # -------------------------------------------
 # IBRA Visualization Tools
 # -------------------------------------------

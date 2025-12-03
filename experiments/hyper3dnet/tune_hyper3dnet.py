@@ -36,8 +36,8 @@ def tune_hyper3dnet(
     cube_norm = minmax_normalize(cube)
 
     # Hyperparameter grid
-    patch_sizes = [11, 25]
-    batch_sizes = [8, 16]
+    patch_sizes = [25]
+    batch_sizes = [4, 8, 16]
     lrs = [1e-3, 5e-4, 1e-4]
 
     configs = list(itertools.product(patch_sizes, batch_sizes, lrs))
