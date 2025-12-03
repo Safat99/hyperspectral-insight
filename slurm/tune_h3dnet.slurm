@@ -2,8 +2,10 @@
 #SBATCH --job-name=tune_h3dnet
 #SBATCH --account=priority-binhaizhu
 #SBATCH --partition=gpupriority
-#SBATCH --gres=gpu:1
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=12
+#SBATCH --gpus-per-task=1
 #SBATCH --mem=64G
 #SBATCH --time=04:00:00
 #SBATCH --output=slurm_logs/%x-%j.out

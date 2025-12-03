@@ -42,17 +42,17 @@ def plot_training_history(history : dict, save_path=None, title="Training Histor
 
     # --- Loss ---
     plt.subplot(1, 2, 1)
-    plt.plot(history.history["loss"], label="train-loss")
-    if "val_loss" in history.history:
-        plt.plot(history.history["val_loss"], label="val-loss")
+    plt.plot(history["loss"], label="train-loss")
+    if "val_loss" in history:
+        plt.plot(history["val_loss"], label="val-loss")
     plt.title("Loss")
     plt.legend()
 
     # --- Accuracy---
     plt.subplot(1, 2, 2)
-    plt.plot(history.history["accuracy"], label="train")
-    if "val_accuracy" in history.history:
-        plt.plot(history.history["val_accuracy"], label="val")
+    plt.plot(history["accuracy"], label="train")
+    if "val_accuracy" in history:
+        plt.plot(history["val_accuracy"], label="val")
     plt.title("Accuracy")
     plt.legend()
 

@@ -12,7 +12,7 @@
 #SBATCH --error=slurm_logs/%x-%j.err
 
 echo "=== Starting Shallow CNN Baseline ==="
-echo "Dataset: $1"
+#echo "Dataset: $1"
 echo "SLURM Job ID: $SLURM_JOB_ID"
 echo "SLURM Submit Dir: $SLURM_SUBMIT_DIR"
 
@@ -34,11 +34,11 @@ export PYTHONPATH="$SLURM_SUBMIT_DIR"
 echo "Python version: $(python3 --version)"
 echo "Running baseline for dataset = $1"
 
-python3 experiments/baseline/run_shallow_cnn.py --dataset "$1"
-# python3 experiments/baseline/run_shallow_cnn.py \
-    # --dataset pavia_centre \
-    # --patch 25 \
-    # --max_samples 2000
+#python3 experiments/baseline/run_shallow_cnn.py --dataset "$1"
+python3 experiments/baseline/run_shallow_cnn.py \
+    --dataset pavia_centre \
+    --patch 25 \
+    --max_samples 2000
 
 echo "=== Job Completed ==="
 
