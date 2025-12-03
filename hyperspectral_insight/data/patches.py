@@ -45,22 +45,41 @@ def extract_patches(
     return np.array(patches, dtype=np.float32), np.array(labels, dtype=np.int32)
 
 
-def create_patches(cube: np.ndarray, gt: np.ndarray, patch_size: int = 5):
+def create_patches(cube: np.ndarray, gt: np.ndarray, patch_size: int = 5, max_samples_per_class: int = None):
     """
     Mini patch extraction for shallow 2D CNN baselines.
     Output: (N, patch, patch, B)
+    
+    If max_samples_per_class is set, randomly samples that many
+    patches per class, preventing memory explosion (needed for Pavia Centre).
     """
     pad = patch_size // 2
     padded = np.pad(cube, ((pad,pad),(pad,pad),(0,0)), mode="reflect")
 
     X, y = [], []
-    for r in range(gt.shape[0]):
-        for c in range(gt.shape[1]):
-            if gt[r, c] == 0:
-                continue
+    
+    for cls in np.unique(gt):
+        if cls == 0:
+            continue
+    
+        coords = np.argwhere(gt == cls)
+        
+        if max_samples_per_class is not None and len(coords) > max_samples_per_class:
+            idx = np.random.choice(len(coords), max_samples_per_class, replace=False)
+            coords = coords[idx]
+        
+        for r, c in coords:
             patch = padded[r:r+patch_size, c:c+patch_size, :]
             X.append(patch)
-            y.append(gt[r, c] - 1)
+            y.append(cls - 1)
+    
+    # for r in range(gt.shape[0]):
+    #     for c in range(gt.shape[1]):
+    #         if gt[r, c] == 0:
+    #             continue
+    #         patch = padded[r:r+patch_size, c:c+patch_size, :]
+    #         X.append(patch)
+    #         y.append(gt[r, c] - 1)
 
     return np.array(X, dtype=np.float32), np.array(y, dtype=np.int32)
 

@@ -10,11 +10,12 @@
 #SBATCH --error=slurm_logs/%x-%j.err
 
 echo "=== Plotting Baseline Histories ==="
+echo "Dataset: $1"
 
 module load Anaconda3/2024.02-1
 source ~/.bashrc
 conda activate hsi_tf
 
-python3 experiments/baseline/analyze_baseline_results.py --dataset indian_pines
+python3 experiments/baseline/analyze_baseline_results.py --dataset "$1"
 
 echo "=== Done ==="
