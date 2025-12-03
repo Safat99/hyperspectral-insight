@@ -62,6 +62,8 @@ def run_h3dnet_with_pca_cv(
     fold_metrics = []
     pca_components_list = []
     fold_histories = []
+    fold_pca_info = []
+
 
     for fold, (tr_idx, val_idx) in enumerate(skf.split(X_full, y_full), 1):
 
@@ -84,11 +86,29 @@ def run_h3dnet_with_pca_cv(
         cumvar = np.cumsum(pca.explained_variance_ratio_)
         D = np.argmax(cumvar >= var_thresh) + 1
         D = min(D, max_components)
+        
+        # ---- Save full PCA info for interpretability ----
+        # Components: (D, B)
+        # Explained variance: (D,)
+        # Mean: (B,)
+        components = pca.components_[:D]
+        explained = pca.explained_variance_ratio_[:D]
+        mean_vec = pca.mean_
+        band_importance = np.sum(np.abs(components), axis=0)
+        fold_pca_info.append({
+            "fold": fold,
+            "D": int(D),
+            "components": components.tolist(),
+            "explained_variance_ratio": explained.tolist(),
+            "mean": mean_vec.tolist(),
+            "band_importance": band_importance.tolist(),
+        })
 
         print(f"[Fold {fold}] Using {D} PCA components "
               f"({cumvar[D-1]*100:.2f}% variance)")
-
         pca_components_list.append(D)
+        
+        
 
         # ---- Project both train & val ----
         Xtrain_pca = Xtrain_pca[:, :D]
@@ -155,6 +175,7 @@ def run_h3dnet_with_pca_cv(
             "mean_metrics": mean_metrics,
             "std_metrics": std_metrics,
             "pca_components": pca_components_list,
+            "pca_details": fold_pca_info,
         }, f, indent=4)
 
     # also CSV for PCA component counts
@@ -169,6 +190,22 @@ def run_h3dnet_with_pca_cv(
     # save histories as .npy
     out_hist = os.path.join(save_dir, f"{dataset_name}_h3dnet_pca_histories.npy")
     np.save(out_hist, fold_histories, allow_pickle=True)
+    
+    
+    pca_components_out = os.path.join(save_dir, f"{dataset_name}_pca_loadings.npy")
+    np.save(pca_components_out,
+            np.array([f["components"] for f in fold_pca_info], dtype=object),
+            allow_pickle=True)
+
+    # Save explained variance ratios
+    pca_var_out = os.path.join(save_dir, f"{dataset_name}_pca_variance.npy")
+    np.save(pca_var_out,
+            np.array([f["explained_variance_ratio"] for f in fold_pca_info], dtype=object),
+            allow_pickle=True)
+    
+
+    print(f"PCA loadings saved to: {pca_components_out}")
+    print(f"PCA variance saved to: {pca_var_out}")
 
     print("\n=== PCA-based Hyper3DNet DONE ===")
     print(f"Results saved to: {out_json}")
@@ -181,6 +218,7 @@ def run_h3dnet_with_pca_cv(
         "std_metrics": std_metrics,
         "pca_components": pca_components_list,
         "histories": fold_histories,
+        "pca_details": fold_pca_info,
     }
 
 
