@@ -14,6 +14,7 @@ def run_shallow_baseline(
     patch_size: int = 25,
     n_splits: int = 10,
     epochs: int = 50,
+    lr: float = 1e-3,
     batch_size: int = 32,
     save_dir: str = "results/baseline/"
 ):
@@ -37,8 +38,11 @@ def run_shallow_baseline(
     # 4) Cross-validation
     print("Running cross-validation...")
     
+    def model_fn(input_shape, n_classes):
+        return build_shallow_cnn(input_shape, n_classes, lr=lr)
+    
     results = kfold_cross_validation(
-        model_fn=build_shallow_cnn,
+        model_fn=model_fn,
         X=X,
         y=y,
         n_splits=n_splits,
@@ -71,12 +75,14 @@ if __name__ == "__main__":
     parser.add_argument("--patch", type=int, default=25)
     parser.add_argument("--epochs", type=int, default=50)
     parser.add_argument("--batch_size", type=int, default=32)
-    
+    parser.add_argument("--learning_rate", type=int, default=1e-4)
+
     args = parser.parse_args()
 
     run_shallow_baseline(
         dataset_name=args.dataset, 
         patch_size=args.patch,
         epochs=args.epochs,
-        batch_size=args.batch_sizes,
+        batch_size=args.batch_size,
+        lr=args.learning_rate,
     )
