@@ -17,7 +17,7 @@ def build_shallow_cnn(input_shape, n_classes, lr=1e-4):
     model = models.Model(inp, out)
     model.compile(
         optimizer=Adam(learning_rate=lr),
-        loss="sparse_categorical_crossentropy",
+        loss="categorical_crossentropy",
         metrics=["accuracy"],
     )
     return model
