@@ -1,7 +1,7 @@
-import tensorflow as tf
+from tensorflow.keras.optimizers import Adam
 from tensorflow.keras import layers, models
 
-def build_shallow_cnn(input_shape, n_classes):
+def build_shallow_cnn(input_shape, n_classes, lr=1e-4):
     """
     Simple 2D CNN used as a baseline.
     Input shape: (patch_h, patch_w, bands)
@@ -16,7 +16,7 @@ def build_shallow_cnn(input_shape, n_classes):
 
     model = models.Model(inp, out)
     model.compile(
-        optimizer=tf.keras.optimizers.Adam(1e-4),
+        optimizer=Adam(learning_rate=lr),
         loss="sparse_categorical_crossentropy",
         metrics=["accuracy"],
     )
