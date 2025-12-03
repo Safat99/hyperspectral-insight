@@ -65,7 +65,7 @@ def tune_hyper3dnet(
             batch_size=batch_size,
             shuffle=True,
             random_state=0,
-            verbose=0,
+            verbose=1,
         )
 
         mean_oa = results["mean_metrics"]["oa"]

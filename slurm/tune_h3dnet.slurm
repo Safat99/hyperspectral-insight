@@ -19,6 +19,9 @@ echo "Working Dir: $SLURM_SUBMIT_DIR"
 module load CUDA/12.2.0
 module load Anaconda3/2024.02-1
 
+# --- Add this line to suppress the cuda_timer warning ---
+export TF_GPU_THREAD_COUNT=1
+
 # Activate your TF environment
 source ~/.bashrc
 conda activate hsi_tf
