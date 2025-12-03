@@ -36,6 +36,7 @@ def run_h3dnet_with_pca_cv(
     Saves:
         - JSON metrics
         - CSV per-fold PCA component counts
+        - NPY fold histories
     """
 
     print(f"\n=== Hyper3DNet + PCA (top ≤ {max_components}) on {dataset_name} ===")
@@ -60,6 +61,7 @@ def run_h3dnet_with_pca_cv(
 
     fold_metrics = []
     pca_components_list = []
+    fold_histories = []
 
     for fold, (tr_idx, val_idx) in enumerate(skf.split(X_full, y_full), 1):
 
@@ -98,12 +100,8 @@ def run_h3dnet_with_pca_cv(
         Xval = Xval_pca.reshape(Xval_raw.shape[0], H, W, D, 1)
 
         # ---- Build Hyper3DNet ----
-        model = build_hyper3dnet(input_shape=(H, W, D, 1), n_classes=n_classes)
-        model.compile(
-            optimizer="adam",
-            loss="categorical_crossentropy",
-            metrics=["accuracy"]
-        )
+        model = build_hyper3dnet(input_shape=(H, W, D, 1), n_classes=n_classes, lr=lr)
+        
 
         # ---- Train ----
         history = model.fit(
@@ -113,6 +111,10 @@ def run_h3dnet_with_pca_cv(
             batch_size=batch_size,
             verbose=1
         )
+        
+        # Save history dict for this fold
+        history_dict = {k: list(v) for k, v in history.history.items()}
+        fold_histories.append(history_dict)
 
         # ---- Evaluate ----
         ypred = model.predict(Xval)
@@ -133,7 +135,7 @@ def run_h3dnet_with_pca_cv(
             "Precision": float(prec),
             "Recall": float(rec),
             "F1": float(f1),
-            "PCA_components": D,
+            "PCA_components": int(D),
         })
 
     # ----------------------------------------------------------
@@ -163,9 +165,14 @@ def run_h3dnet_with_pca_cv(
         os.path.join(save_dir, f"{dataset_name}_h3dnet_pca_components.csv"),
         index=False
     )
+    
+    # save histories as .npy
+    out_hist = os.path.join(save_dir, f"{dataset_name}_h3dnet_pca_histories.npy")
+    np.save(out_hist, fold_histories, allow_pickle=True)
 
     print("\n=== PCA-based Hyper3DNet DONE ===")
     print(f"Results saved to: {out_json}")
+    print(f"Histories saved to: {out_hist}")
     print(f"Mean metrics: {mean_metrics}")
 
     return {
@@ -173,6 +180,7 @@ def run_h3dnet_with_pca_cv(
         "mean_metrics": mean_metrics,
         "std_metrics": std_metrics,
         "pca_components": pca_components_list,
+        "histories": fold_histories,
     }
 
 
@@ -187,6 +195,7 @@ if __name__ == "__main__":
     parser.add_argument("--splits", type=int, default=10)
     parser.add_argument("--epochs", type=int, default=50)
     parser.add_argument("--batch_size", type=int, default=16)
+    parser.add_argument("--learning_rate", type=float, default=1e-4)
     args = parser.parse_args()
 
     run_h3dnet_with_pca_cv(
@@ -197,4 +206,5 @@ if __name__ == "__main__":
         n_splits=args.splits,
         epochs=args.epochs,
         batch_size=args.batch_size,
+        lr=args.learning_rate,
     )

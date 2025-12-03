@@ -15,6 +15,7 @@ def run_h3dnet_original_cv(
     n_splits: int = 10,
     epochs: int = 50,
     batch_size: int = 16,
+    lr: float = 1e-4,
     save_dir: str = "results/hyper3dnet/",
 ):
     """
@@ -27,10 +28,12 @@ def run_h3dnet_original_cv(
         n_splits: # of folds for CV
         epochs: epochs per fold
         batch_size: batch size
+        lr: learning rate for Hyper3DNet
         save_dir: where to store JSON results
 
     Saves:
         JSON file with per-fold metrics + mean/std metrics.
+        NPY with list of history dicts (per fold)
     """
 
     print(f"\n=== Hyper3DNet ORIGINAL (no PCA/BS) on {dataset_name} ===")
@@ -46,10 +49,14 @@ def run_h3dnet_original_cv(
 
     print(f"  Patches shape: {X.shape}, Labels shape: {y.shape}")
     print(f"  #classes (excluding 0): {int(y.max()) + 1}")
+    
+    def model_fn(input_shape, n_classes):
+        # If your build_hyper3dnet doesn't accept lr, remove lr=lr
+        return build_hyper3dnet(input_shape, n_classes, lr=lr)
 
     # 4) Run stratified K-fold cross-validation
     results = kfold_cross_validation(
-        model_fn=build_hyper3dnet,
+        model_fn=model_fn,
         X=X,
         y=y,
         n_splits=n_splits,
@@ -67,7 +74,12 @@ def run_h3dnet_original_cv(
     with open(out_path, "w") as f:
         json.dump(results, f, indent=4)
 
-    print(f"  Saved results to: {out_path}")
+    # Histories are inside results["histories"] (list of dicts)
+    out_hist = os.path.join(save_dir, f"{dataset_name}_h3dnet_original_histories.npy")
+    np.save(out_hist, results["histories"], allow_pickle=True)
+
+    print(f"  Saved metrics JSON to: {out_path}")
+    print(f"  Saved fold histories to: {out_hist}")
     print(f"  Mean metrics: {results['mean_metrics']}")
     print(f"  Std metrics:  {results['std_metrics']}")
 
@@ -82,7 +94,8 @@ if __name__ == "__main__":
     parser.add_argument("--patch", type=int, default=25)
     parser.add_argument("--splits", type=int, default=10)
     parser.add_argument("--epochs", type=int, default=50)
-    parser.add_argument("--batch_size", type=int, default=128)
+    parser.add_argument("--batch_size", type=int, default=16)
+    parser.add_argument("--learning_rate", type=float, default=1e-4)
 
     args = parser.parse_args()
 
@@ -92,4 +105,5 @@ if __name__ == "__main__":
         n_splits=args.splits,
         epochs=args.epochs,
         batch_size=args.batch_size,
+        lr=args.learning_rate,
     )
