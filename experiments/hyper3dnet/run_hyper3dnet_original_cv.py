@@ -64,7 +64,7 @@ def run_h3dnet_original_cv(
         batch_size=batch_size,
         shuffle=True,
         random_state=0,
-        verbose=0,
+        verbose=1,
     )
 
     # 5) Save results

@@ -2,7 +2,7 @@ import tensorflow as tf
 from tensorflow.keras import layers, models
 
 
-def build_hyper3dnet_lite(input_shape, n_classes):
+def build_hyper3dnet_lite(input_shape, n_classes, lr=1e-4):
     """
     Lightweight Hyper3DNet-Lite architecture.
     input_shape: (win, win, bands, 1)
@@ -31,7 +31,7 @@ def build_hyper3dnet_lite(input_shape, n_classes):
 
     model = models.Model(inp, out)
     model.compile(
-        optimizer=tf.keras.optimizers.Adam(1e-4),
+        optimizer=tf.keras.optimizers.Adam(learning_rate=lr),
         loss="categorical_crossentropy",
         metrics=["accuracy"],
     )

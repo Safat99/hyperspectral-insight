@@ -16,6 +16,7 @@ def run_lite_fullbands_cv(
     n_splits: int = 10,
     epochs: int = 50,
     batch_size: int = 128,
+    lr: float = 1e-4,
     save_dir: str = "results/hyper3dnetlite/",
 ):
     """
@@ -57,10 +58,15 @@ def run_lite_fullbands_cv(
     # --------------------------
     # 4. Stratified K-Fold CV
     # --------------------------
+    def model_fn(input_shape, n_classes):
+        # If your build_hyper3dnet doesn't accept lr, remove lr=lr
+        return build_hyper3dnet_lite(input_shape, n_classes, lr=lr)
+    
+    
     print("  Running Stratified K-Fold CV...")
 
     results = kfold_cross_validation(
-        model_fn=build_hyper3dnet_lite,
+        model_fn=model_fn,
         X=X,
         y=y,
         n_splits=n_splits,
@@ -68,19 +74,24 @@ def run_lite_fullbands_cv(
         batch_size=batch_size,
         shuffle=True,
         random_state=0,
-        verbose=0,
+        verbose=1,
     )
 
     # --------------------------
-    # 5. Save results JSON
+    # 5. Save results
     # --------------------------
     os.makedirs(save_dir, exist_ok=True)
     out_path = os.path.join(save_dir, f"{dataset_name}_lite_fullbands_cv.json")
 
     with open(out_path, "w") as f:
         json.dump(results, f, indent=4)
+    
+    # Histories are inside results["histories"] (list of dicts)
+    out_hist = os.path.join(save_dir, f"{dataset_name}_h3dnetlite_fullbands_histories.npy")
+    np.save(out_hist, results["histories"], allow_pickle=True)
 
-    print(f"  Saved results to: {out_path}")
+    print(f"  Saved metrics JSON to: {out_path}")
+    print(f"  Saved fold histories to: {out_hist}")
     print(f"  Mean metrics: {results['mean_metrics']}")
     print(f"  Std metrics:  {results['std_metrics']}")
 
@@ -96,6 +107,7 @@ if __name__ == "__main__":
     parser.add_argument("--splits", type=int, default=10)
     parser.add_argument("--epochs", type=int, default=50)
     parser.add_argument("--batch_size", type=int, default=128)
+    parser.add_argument("--learning_rate", type=float, default=1e-4)
 
     args = parser.parse_args()
 
@@ -105,4 +117,5 @@ if __name__ == "__main__":
         n_splits=args.splits,
         epochs=args.epochs,
         batch_size=args.batch_size,
+        lr=args.learning_rate,
     )
