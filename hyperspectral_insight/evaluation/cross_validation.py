@@ -35,27 +35,34 @@ def train_one_fold(
     """
 
     n_classes = int(y_train.max() + 1)
-    """y_train_oh = OneHotEncoder(sparse_output=False).fit_transform(
-        y_train.reshape(-1, 1)
-    )
-    y_val_oh = OneHotEncoder(sparse_output=False).fit_transform(
-        y_val.reshape(-1, 1)
-    )"""
+    
+    # One-hot encode labels
+    enc = OneHotEncoder(sparse=False)
+    y_train_oh = enc.fit_transform(y_train.reshape(-1, 1))
+    y_val_oh = enc.fit_transform(y_val.reshape(-1, 1))
 
+    # Build model
     model = model_fn(input_shape=X_train.shape[1:], n_classes=n_classes)
 
+    # Train model
     history = model.fit(
-        X_train, y_train,
-        validation_data=(X_val, y_val),
+        X_train, y_train_oh,
+        validation_data=(X_val, y_val_oh),
         epochs=epochs,
         batch_size=batch_size,
         verbose=verbose,
     )
+    
+    # Convert to plain dict for saving
+    history_dict = {
+        k : list(v) for k, v in history.history.items()
+    }
 
+    # Predict fold accuracy
     y_pred = np.argmax(model.predict(X_val, verbose=0), axis=1)
     fold_metrics = compute_metrics(y_val, y_pred)
 
-    return model, history, fold_metrics
+    return model, history_dict, fold_metrics
 
 def kfold_cross_validation(
     model_fn,
@@ -85,6 +92,7 @@ def kfold_cross_validation(
             - fold_metrics: list of metric dicts
             - mean_metrics
             - std_metrics
+            - training history
     """
 
     kf = StratifiedKFold(
@@ -94,6 +102,7 @@ def kfold_cross_validation(
     )
 
     fold_results = []
+    histories = []
 
     for fold_idx, (train_idx, val_idx) in enumerate(kf.split(X, y)):
         print(f"\n[CV] Fold {fold_idx + 1}/{n_splits}")
@@ -101,7 +110,7 @@ def kfold_cross_validation(
         X_train, y_train = X[train_idx], y[train_idx]
         X_val, y_val = X[val_idx], y[val_idx]
 
-        _, _, metrics = train_one_fold(
+        _, history_dict, metrics = train_one_fold(
             model_fn,
             X_train,
             y_train,
@@ -111,8 +120,12 @@ def kfold_cross_validation(
             batch_size=batch_size,
             verbose=verbose,
         )
-        print(" Fold Metrics:", metrics)
+        
+        
         fold_results.append(metrics)
+        histories.append(history_dict)
+        
+        print(" Fold Metrics:", metrics)
 
     # Aggregate results
     keys = fold_results[0].keys()
@@ -123,4 +136,5 @@ def kfold_cross_validation(
         "fold_metrics": fold_results,
         "mean_metrics": mean_metrics,
         "std_metrics": std_metrics,
+        "histories" : histories,
     }
