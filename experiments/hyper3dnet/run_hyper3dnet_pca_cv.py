@@ -106,7 +106,7 @@ def run_h3dnet_with_pca_cv(
 
         print(f"[Fold {fold}] Using {D} PCA components "
               f"({cumvar[D-1]*100:.2f}% variance)")
-        pca_components_list.append(D)
+        pca_components_list.append(int(D))
         
         
 
