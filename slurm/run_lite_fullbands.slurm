@@ -2,11 +2,12 @@
 #SBATCH --job-name=h3dnet_lite_full
 #SBATCH --account=priority-binhaizhu
 #SBATCH --partition=gpupriority
-#SBATCH --gres=gpu:1
+#SBATCH --nodes=1
+#SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=16
 #SBATCH --gpus-per-task=1
 #SBATCH --mem=64G
-#SBATCH --time=06:00:00
+#SBATCH --time=04:00:00
 #SBATCH --output=slurm_logs/%x-%j.out
 #SBATCH --error=slurm_logs/%x-%j.err
 
@@ -20,11 +21,11 @@ conda activate hsi_tf
 export PYTHONPATH="$SLURM_SUBMIT_DIR"
 mkdir -p slurm_logs
 
-python3 experiments/hyper3dnetlite/run_lite_fullbands_cv \
+python3 experiments/hyper3dnetlite/run_lite_full_bands.py \
     --dataset indian_pines \
     --patch 25 \
-    --splits 10 \
+    --splits 5 \
     --epochs 50 \
-    --batch_size 4
+    --batch_size 128
 
 echo "===== Hyper3DNet FULL Completed ====="

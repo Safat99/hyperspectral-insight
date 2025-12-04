@@ -7,11 +7,12 @@
 #SBATCH --cpus-per-task=16
 #SBATCH --gpus-per-task=1
 #SBATCH --mem=64G
-#SBATCH --time=04:00:00
+#SBATCH --time=06:00:00
 #SBATCH --output=slurm_logs/%x-%j.out
 #SBATCH --error=slurm_logs/%x-%j.err
 
 echo "===== Hyper3DNet Tuning Job Started ====="
+echo "Dataset: $1"
 echo "Job ID: $SLURM_JOB_ID"
 echo "Running on: $(hostname)"
 echo "Working Dir: $SLURM_SUBMIT_DIR"
@@ -35,7 +36,7 @@ mkdir -p slurm_logs
 echo "Running Hyper3DNetLite tuning..."
 
 python3 experiments/hyper3dnetlite/tune_lite.py \
-    --dataset indian_pines \
+    --dataset "$1" \
     --splits 3 \
     --epochs 20
 

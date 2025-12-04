@@ -27,9 +27,9 @@ python3 experiments/hyper3dnet/run_hyper3dnet_pca_cv.py \
     --patch 25 \
     --var_thresh 0.99 \
     --max_components 30 \
-    --splits 3 \
+    --splits 5 \
     --epochs 50 \
-    --batch_size 32 \
+    --batch_size 4 \
     --learning_rate 1e-4
 
 echo "===== Hyper3DNet PCA Completed ====="
