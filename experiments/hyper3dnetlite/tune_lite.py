@@ -35,7 +35,7 @@ def tune_lite(
 
     # Hyperparameter grid
     patch_sizes = [25]
-    batch_sizes = [4 ,64, 128, 256]
+    batch_sizes = [4, 64, 128, 256]
     lrs = [1e-3, 5e-4, 1e-4]
 
     configs = list(itertools.product(patch_sizes, batch_sizes, lrs))
