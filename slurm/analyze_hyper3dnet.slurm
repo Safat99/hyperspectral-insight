@@ -10,7 +10,7 @@
 #SBATCH --error=slurm_logs/%x-%j.err
 
 echo "=== Plotting hyper3dnet Histories ==="
-echo "Dataset: $1"
+echo "Dataset: $1 Variant: $2"
 cd $SLURM_SUBMIT_DIR
 
 module load Anaconda3/2024.02-1
@@ -20,7 +20,7 @@ conda activate hsi_tf
 # Make sure Python can import your local package
 export PYTHONPATH="$SLURM_SUBMIT_DIR"
 
-python3 experiments/hyper3dnet/analyze_h3dnet_histories.py --dataset "$1" --variant
+python3 experiments/hyper3dnet/analyze_h3dnet_histories.py --dataset "$1" --variant "$2"
 
 
 echo "=== Done ==="
