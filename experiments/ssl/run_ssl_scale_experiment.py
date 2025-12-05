@@ -51,16 +51,18 @@ def run_ssl_scaling_experiment(
     dataset_name,
     subset_fracs=[0.10, 0.20, 0.40, 0.60, 0.85],
     labeled_ratio=0.20,
-    num_bands=20,
+    num_bands=5,
     patch_size=25,
     n_splits=5,
     ssl_iters=3,
     confidence_thresh=0.9,
     epochs_baseline=30,
     epochs_ssl_per_iter=15,
-    batch_size=16,
+    batch_size: int=128,
     save_dir="results/scaling_ssl/",
     random_state=0,
+    lr: float = 5e-4,
+     max_samples_per_class: int = None,
 ):
 
     print("\n==============================================")
@@ -84,12 +86,19 @@ def run_ssl_scaling_experiment(
         max_distance=5.0,
         verbose=False,
     )
-    cube_sel = cube_norm[:, :, selected_bands]
+    # cube_sel = cube_norm[:, :, selected_bands]
 
     # ----------------------------------------------------------
     # 3. Patch Extraction
     # ----------------------------------------------------------
-    X_all, y_all = extract_patches(cube_sel, gt, patch_size)
+    # X_all, y_all = extract_patches(cube_sel, gt, patch_size)
+    X_all, y_all = extract_patches(
+        cube_norm, gt,
+        win=patch_size,
+        drop_label0=True,
+        max_samples_per_class=max_samples_per_class
+    )
+    
     print(f"Total patches: {X_all.shape}, labels: {y_all.shape}")
 
     results_all = {}
@@ -111,7 +120,7 @@ def run_ssl_scaling_experiment(
         print(f"Subset size: {len(X_sub)} samples")
 
         # ----------------------------------------------------------
-        # 5. Labeled/Unlabeled split
+        # Labeled/Unlabeled split
         # ----------------------------------------------------------
         X_lab, y_lab, X_unlab = make_labeled_unlabeled_split(
             X_sub, y_sub, labeled_ratio=labeled_ratio, random_state=random_state
@@ -119,7 +128,7 @@ def run_ssl_scaling_experiment(
         print(f"Labeled = {len(X_lab)}, Unlabeled = {len(X_unlab)}")
 
         # ----------------------------------------------------------
-        # 6. Prepare K-fold CV
+        # Prepare K-fold CV
         # ----------------------------------------------------------
         skf = StratifiedKFold(
             n_splits=n_splits, shuffle=True, random_state=random_state
@@ -128,6 +137,10 @@ def run_ssl_scaling_experiment(
         baseline_fold_scores = []
         ssl_fold_scores = []
 
+        
+        def model_fn(input_shape, n_classes):
+            return build_hyper3dnet_lite(input_shape, n_classes, lr=lr)
+        
         # ----------------------------------------------------------
         # K-FOLD LOOP
         # ----------------------------------------------------------
@@ -144,7 +157,7 @@ def run_ssl_scaling_experiment(
             # ----------------------------------------------------------
             print("Training BASELINE...")
             baseline_res = run_pseudo_label_ssl_fold(
-                build_model_fn=build_hyper3dnet_lite,
+                build_model_fn=model_fn,
                 X_labeled_fold=X_lab_tr,
                 y_labeled_fold=y_lab_tr,
                 X_unlabeled_pool=None,
@@ -163,7 +176,7 @@ def run_ssl_scaling_experiment(
             # ----------------------------------------------------------
             print("Training SSL...")
             ssl_res = run_pseudo_label_ssl_fold(
-                build_model_fn=build_hyper3dnet_lite,
+                build_model_fn=model_fn,
                 X_labeled_fold=X_lab_tr,
                 y_labeled_fold=y_lab_tr,
                 X_unlabeled_pool=X_unlab,
@@ -179,7 +192,7 @@ def run_ssl_scaling_experiment(
 
 
         # ----------------------------------------------------------
-        # 7. Aggregate fold statistics (mean, std, CI)
+        # Aggregate fold statistics (mean, std, CI)
         # ----------------------------------------------------------
         K = n_splits
 
@@ -216,9 +229,7 @@ def run_ssl_scaling_experiment(
         print("  Baseline mean:", mean_b, "CI:", ci_b)
         print("  SSL mean     :", mean_s, "CI:", ci_s)
 
-    # ----------------------------------------------------------
-    # Save all results
-    # ----------------------------------------------------------
+    
     os.makedirs(save_dir, exist_ok=True)
     out_path = os.path.join(
         save_dir, f"{dataset_name}_ssl_scaling_results.json"
@@ -232,14 +243,21 @@ def run_ssl_scaling_experiment(
 
 
 
-# ============================================================
-# CLI ENTRY POINT
-# ============================================================
+
 if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset", type=str, required=True)
+    parser.add_argument("--learning_rate", type=float, default=5e-4)
+    parser.add_argument("--batch_size", type=int, default=128)
+    parser.add_argument("--max_samples", type=int, default=None)
+    
     args = parser.parse_args()
 
-    run_ssl_scaling_experiment(dataset_name=args.dataset)
+    run_ssl_scaling_experiment(
+        dataset_name=args.dataset,
+        lr=args.learning_rate,
+        batch_size=args.batch_size,
+        max_samples_per_class=args.max_samples,
+    )

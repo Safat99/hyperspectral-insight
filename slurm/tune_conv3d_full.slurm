@@ -11,8 +11,8 @@
 #SBATCH --time=04:00:00
 
 #SBATCH --array=0-4
-#SBATCH --output=slurm_logs/%x-%j.out
-#SBATCH --error=slurm_logs/%x-%j.err
+#SBATCH --output=slurm_logs/%x-%A_%a.out
+#SBATCH --error=slurm_logs/%x-%A_%a.err
 
 echo "===== Conv3d FULL-BAND CV Started ====="
 

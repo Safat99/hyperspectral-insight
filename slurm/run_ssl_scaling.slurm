@@ -9,11 +9,15 @@
 #SBATCH --gpus-per-task=1
 #SBATCH --mem=128G
 #SBATCH --time=12:00:00
-#SBATCH --output=slurm_logs/%x-%j.out
-#SBATCH --error=slurm_logs/%x-%j.err
+
+#SBATCH --array=0-4
+#SBATCH --output=slurm_logs/%x-%A_%a.out
+#SBATCH --error=slurm_logs/%x-%A_%a.err
 
 echo "===== SSL Scaling Experiment Started ====="
-echo "Dataset: $1"
+DATASETS=("salinas" "pavia_university" "pavia_centre" "ksc", "indian_pines")
+# DATASETS=("salinas" "pavia_centre")
+DATASET=${DATASETS[$SLURM_ARRAY_TASK_ID]}
 
 module load CUDA/12.2.0
 module load Anaconda3/2024.02-1
@@ -23,6 +27,9 @@ export PYTHONPATH="$SLURM_SUBMIT_DIR"
 mkdir -p slurm_logs
 
 python3 run_ssl_scaling_experiment.py \
-    --dataset "$1"
+    --dataset "$DATASET" \
+    --max_samples 2000 \
+    --batch_size 128 \
+    --learning_rate 5e-4
 
 echo "===== SSL Scaling Experiment Completed ====="
