@@ -5,13 +5,21 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=16
-#SBATCH --gpus-per-task=1
+#SBATCH --gres=gpu:1
 #SBATCH --mem=64G
 #SBATCH --time=04:00:00
-#SBATCH --output=slurm_logs/%x-%j.out
-#SBATCH --error=slurm_logs/%x-%j.err
 
-echo "===== Hyper3DNet FULL-BAND CV Started ====="
+#SBATCH --array=0-4
+#SBATCH --output=slurm_logs/%x-%A_%a.out
+#SBATCH --error=slurm_logs/%x-%A_%a.err
+
+echo "===== Hyper3DNet-Lite FULL-BAND CV Started ====="
+
+DATASETS=("indian_pines" "salinas" "pavia_university" "pavia_centre" "ksc")
+DATASET=${DATASETS[$SLURM_ARRAY_TASK_ID]}
+
+echo "Running dataset: $DATASET"
+echo "Array task: $SLURM_ARRAY_TASK_ID"
 
 module load CUDA/12.2.0
 module load Anaconda3/2024.02-1
@@ -21,11 +29,13 @@ conda activate hsi_tf
 export PYTHONPATH="$SLURM_SUBMIT_DIR"
 mkdir -p slurm_logs
 
+# -----------------------------
+# Run Hyper3DNet-Lite CV
+# -----------------------------
 python3 experiments/hyper3dnetlite/run_lite_full_bands.py \
-    --dataset indian_pines \
+    --dataset "$DATASET" \
     --patch 25 \
     --splits 5 \
     --epochs 50 \
     --batch_size 128
 
-echo "===== Hyper3DNet FULL Completed ====="

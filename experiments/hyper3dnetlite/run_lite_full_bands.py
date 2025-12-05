@@ -17,7 +17,8 @@ def run_lite_fullbands_cv(
     epochs: int = 50,
     batch_size: int = 128,
     lr: float = 1e-4,
-    save_dir: str = "results/hyper3dnetlite/",
+    # save_dir: str = "results/hyper3dnetlite/",
+    save_dir = None,
 ):
     """
     Hyper3DNet-Lite full-band cross-validation baseline.
@@ -80,6 +81,9 @@ def run_lite_fullbands_cv(
     # --------------------------
     # 5. Save results
     # --------------------------
+    if save_dir is None:
+        save_dir = f"results/hyper3dnetlite/{dataset_name}/"
+    
     os.makedirs(save_dir, exist_ok=True)
     out_path = os.path.join(save_dir, f"{dataset_name}_lite_fullbands_cv.json")
 
