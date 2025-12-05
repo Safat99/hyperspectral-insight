@@ -1,7 +1,7 @@
 import tensorflow as tf
 from tensorflow.keras import layers, models
 
-def build_full3dcnn(input_shape, n_classes):
+def build_full3dcnn(input_shape, n_classes, lr=1e-4):
     """
     attention based band seletion paper's cnn network
 
@@ -26,7 +26,7 @@ def build_full3dcnn(input_shape, n_classes):
     model = models.Model(inp, out)
     
     model.compile(
-        optimizer=tf.keras.optimizers.Adam(1e-4),
+        optimizer=tf.keras.optimizers.Adam(learning_rate=lr),
         loss="categorical_crossentropy", # important for one-hot labels
         metrics=["accuracy"]
     )
