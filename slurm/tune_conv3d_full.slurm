@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=tune_conv3d_full
 #SBATCH --account=priority-binhaizhu
-#SBATCH --partition=priority
+#SBATCH --partition=gpupriority
 #SBATCH --gres=gpu:1
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1

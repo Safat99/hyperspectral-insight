@@ -38,6 +38,7 @@ python3 experiments/hyper3dnetlite/run_lite_full_bands.py \
     --patch 25 \
     --splits 5 \
     --epochs 50 \
-    --batch_size 128
-    --max_samples 2000
+    --max_samples 2000 \
+    --batch_size 128 \
+    --learning_rate 5e-4
 

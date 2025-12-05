@@ -59,6 +59,7 @@ def run_ssl_scaling_experiment(
     epochs_baseline=30,
     epochs_ssl_per_iter=15,
     batch_size: int=128,
+    batch_size=4,
     save_dir="results/scaling_ssl/",
     random_state=0,
     lr: float = 5e-4,
@@ -232,7 +233,7 @@ def run_ssl_scaling_experiment(
     
     os.makedirs(save_dir, exist_ok=True)
     out_path = os.path.join(
-        save_dir, f"{dataset_name}_ssl_scaling_results.json"
+        save_dir, f"{dataset_name}_b4_n5_ssl_scaling_results.json"
     )
 
     with open(out_path, "w") as f:

@@ -26,7 +26,7 @@ conda activate hsi_tf
 export PYTHONPATH="$SLURM_SUBMIT_DIR"
 mkdir -p slurm_logs
 
-python3 run_ssl_scaling_experiment.py \
+python3 experiments/ssl/run_ssl_scaling_experiment.py \
     --dataset "$DATASET" \
     --max_samples 2000 \
     --batch_size 128 \

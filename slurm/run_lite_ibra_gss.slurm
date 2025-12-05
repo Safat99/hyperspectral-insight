@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=h3dnet_lite_full_ibra_gss
+#SBATCH --job-name=h3dnet_lite_ibra_gss
 #SBATCH --account=priority-binhaizhu
 #SBATCH --partition=gpupriority
 #SBATCH --nodes=1

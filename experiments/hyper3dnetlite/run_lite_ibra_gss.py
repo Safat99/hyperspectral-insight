@@ -159,7 +159,7 @@ if __name__ == "__main__":
     parser.add_argument("--epochs", type=int, default=50)
     parser.add_argument("--batch_size", type=int, default=128)
     parser.add_argument("--verbose", action="store_true")
-    parser.add_argument("--learning_rate", type=int, default=5e-4)
+    parser.add_argument("--learning_rate", type=float, default=5e-4)
     parser.add_argument("--max_samples", type=int, default=None)
 
     args = parser.parse_args()

@@ -18,8 +18,8 @@ conda activate hsi_tf
 export PYTHONPATH="$SLURM_SUBMIT_DIR"
 mkdir -p slurm_logs
 
-python3 plot_ssl_scaling_results.py \
-    --json results/scaling_ssl/"$1"_ssl_scaling_results.json \
+python3 experiments/ssl/plot_ssl_scaling_result.py \
+    --json results/scaling_ssl/"$1"_b4_n5_ssl_scaling_results.json \
     --save results/scaling_ssl/"$1"_ssl_scaling_plot.png
 
 echo "===== SSL Plotting Completed ====="
