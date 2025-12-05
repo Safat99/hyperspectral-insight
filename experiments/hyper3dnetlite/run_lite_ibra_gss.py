@@ -13,15 +13,17 @@ from hyperspectral_insight.models.hyper3dnet_lite import build_hyper3dnet_lite
 
 def run_lite_ibra_gss(
     dataset_name: str,
-    num_bands: int = 20,
+    num_bands: int = 5,
     vif_threshold: float = 10.0,
     max_distance: float = 5.0,
     patch_size: int = 11,
     n_splits: int = 10,
     epochs: int = 50,
-    batch_size: int = 16,
+    batch_size: int = 128,
     save_dir: str = "results/hyper3dnetlite/",
     verbose: bool = True,
+    max_samples_per_class: int = None,
+    lr: float = 1e-3,
 ):
     """
     Hyper3DNet-Lite with IBRA+GSS band selection.
@@ -84,7 +86,13 @@ def run_lite_ibra_gss(
     # -----------------------------------------
     # 5. Patch extraction
     # -----------------------------------------
-    X, y = extract_patches(cube_sel, gt, patch_size)
+    # X, y = extract_patches(cube_sel, gt, patch_size)
+    X, y = extract_patches(
+        cube_norm, gt,
+        win=patch_size,
+        drop_label0=True,
+        max_samples_per_class=max_samples_per_class
+    )
 
     print(f"  Patch shape: {X.shape}")
     print(f"  Number of classes: {int(y.max()) + 1}")
@@ -94,8 +102,12 @@ def run_lite_ibra_gss(
     # -----------------------------------------
     print("Running Stratified K-Fold CV...")
 
+    def model_fn(input_shape, n_classes):
+        # If your build_hyper3dnet doesn't accept lr, remove lr=lr
+        return build_hyper3dnet_lite(input_shape, n_classes, lr=lr)
+
     results = kfold_cross_validation(
-        model_fn=build_hyper3dnet_lite,
+        model_fn=model_fn,
         X=X,
         y=y,
         n_splits=n_splits,
@@ -147,6 +159,8 @@ if __name__ == "__main__":
     parser.add_argument("--epochs", type=int, default=50)
     parser.add_argument("--batch_size", type=int, default=128)
     parser.add_argument("--verbose", action="store_true")
+    parser.add_argument("--learning_rate", type=int, default=5e-4)
+    parser.add_argument("--max_samples", type=int, default=None)
 
     args = parser.parse_args()
 
@@ -160,4 +174,6 @@ if __name__ == "__main__":
         epochs=args.epochs,
         batch_size=args.batch_size,
         verbose=args.verbose,
+        lr=args.learning_rate,
+        max_samples_per_class=args.max_samples,
     )
