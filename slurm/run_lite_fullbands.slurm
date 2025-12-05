@@ -15,7 +15,8 @@
 
 echo "===== Hyper3DNet-Lite FULL-BAND CV Started ====="
 
-DATASETS=("indian_pines" "salinas" "pavia_university" "pavia_centre" "ksc")
+# DATASETS=("indian_pines" "salinas" "pavia_university" "pavia_centre" "ksc")
+DATASETS=("salinas" "pavia_centre")
 DATASET=${DATASETS[$SLURM_ARRAY_TASK_ID]}
 
 echo "Running dataset: $DATASET"
@@ -38,4 +39,5 @@ python3 experiments/hyper3dnetlite/run_lite_full_bands.py \
     --splits 5 \
     --epochs 50 \
     --batch_size 128
+    --max_samples 2000
 

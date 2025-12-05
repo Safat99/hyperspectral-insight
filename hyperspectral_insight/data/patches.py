@@ -16,30 +16,84 @@ def cube_to_Xy(cube: np.ndarray, gt: np.ndarray, mask_zero=True):
 
     return X, y
 
+# def extract_patches(
+#     cube: np.ndarray, gt: np.ndarray, win: int = 25, drop_label0: bool = True
+# ) -> Tuple[np.ndarray, np.ndarray]:
+#     """
+#     Extract (win x win) spatial patches around each labeled pixel.
+#     Output shape: (N, win, win, B, 1)
+#     """
+#     H, W, B = cube.shape
+#     pad = win // 2
+
+#     padded = np.pad(cube, ((pad,pad),(pad,pad),(0,0)), mode="reflect")
+
+#     if drop_label0:
+#         ys, xs = np.where(gt != 0)
+#     else:
+#         ys, xs = np.where(np.ones_like(gt, dtype=bool))
+
+#     patches = []
+#     labels = []
+
+#     for r, c in zip(ys, xs):
+#         pr, pc = r + pad, c + pad
+#         patch = padded[pr-pad : pr+pad+1, pc-pad : pc+pad+1, :]
+#         patches.append(patch[..., None])
+#         labels.append(gt[r, c] - 1)
+
+#     return np.array(patches, dtype=np.float32), np.array(labels, dtype=np.int32)
+
+
 def extract_patches(
-    cube: np.ndarray, gt: np.ndarray, win: int = 25, drop_label0: bool = True
+    cube: np.ndarray,
+    gt: np.ndarray,
+    win: int = 25,
+    drop_label0: bool = True,
+    max_samples_per_class: int = None
 ) -> Tuple[np.ndarray, np.ndarray]:
-    """
-    Extract (win x win) spatial patches around each labeled pixel.
-    Output shape: (N, win, win, B, 1)
-    """
+
     H, W, B = cube.shape
     pad = win // 2
 
-    padded = np.pad(cube, ((pad,pad),(pad,pad),(0,0)), mode="reflect")
+    padded = np.pad(cube, ((pad, pad), (pad, pad), (0, 0)), mode="reflect")
 
     if drop_label0:
         ys, xs = np.where(gt != 0)
     else:
         ys, xs = np.where(np.ones_like(gt, dtype=bool))
 
+    coords = np.stack([ys, xs], axis=1)
+
+    # ----- NEW: class-wise sampling -----
+    if max_samples_per_class is not None:
+        new_coords = []
+        for cls in np.unique(gt):
+            if cls == 0 and drop_label0:
+                continue
+            cls_mask = (gt[ys, xs] == cls)
+            cls_coords = coords[cls_mask]
+
+            if len(cls_coords) > max_samples_per_class:
+                idx = np.random.choice(
+                    len(cls_coords),
+                    max_samples_per_class,
+                    replace=False
+                )
+                cls_coords = cls_coords[idx]
+
+            new_coords.append(cls_coords)
+
+        coords = np.vstack(new_coords)
+
+    # Extract patches
     patches = []
     labels = []
 
-    for r, c in zip(ys, xs):
+    for r, c in coords:
         pr, pc = r + pad, c + pad
-        patch = padded[pr-pad : pr+pad+1, pc-pad : pc+pad+1, :]
-        patches.append(patch[..., None])
+        patch = padded[pr-pad: pr+pad+1, pc-pad: pc+pad+1, :]
+        patches.append(patch[..., None])   # keep 3D CNN shape
         labels.append(gt[r, c] - 1)
 
     return np.array(patches, dtype=np.float32), np.array(labels, dtype=np.int32)

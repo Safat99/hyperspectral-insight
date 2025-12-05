@@ -18,6 +18,7 @@ def run_lite_fullbands_cv(
     batch_size: int = 128,
     lr: float = 1e-4,
     # save_dir: str = "results/hyper3dnetlite/",
+    max_samples_per_class: int = None,
     save_dir = None,
 ):
     """
@@ -52,7 +53,15 @@ def run_lite_fullbands_cv(
     # --------------------------
     # 3. Extract 3D patches
     # --------------------------
-    X, y = extract_patches(cube_norm, gt, patch_size)
+    # X, y = extract_patches(cube_norm, gt, patch_size)
+    X, y = extract_patches(
+        cube_norm, gt,
+        win=patch_size,
+        drop_label0=True,
+        max_samples_per_class=max_samples_per_class
+    )
+    
+    
     print(f"  Patches: {X.shape}, Labels: {y.shape}")
     print(f"  Classes: {int(y.max()) + 1}")
 
@@ -112,6 +121,7 @@ if __name__ == "__main__":
     parser.add_argument("--epochs", type=int, default=50)
     parser.add_argument("--batch_size", type=int, default=128)
     parser.add_argument("--learning_rate", type=float, default=1e-4)
+    parser.add_argument("--max_samples", type=int, default=None)
 
     args = parser.parse_args()
 
@@ -122,4 +132,5 @@ if __name__ == "__main__":
         epochs=args.epochs,
         batch_size=args.batch_size,
         lr=args.learning_rate,
+        max_samples_per_class=args.max_samples,
     )
