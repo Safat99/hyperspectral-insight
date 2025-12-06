@@ -18,6 +18,9 @@ def run_conv3d_full(
     batch_size: int = 16,
     save_dir: str = "results/conv3d_full/",
     verbose: bool = True,
+    max_samples_per_class: int = None,
+    lr: float = 1e-3,
+    
 ):
     """
     FULL-BAND Conv3D CNN (no band selection).
@@ -34,14 +37,25 @@ def run_conv3d_full(
     cube_norm = minmax_normalize(cube)
 
     # 2. Extract patches
-    X, y = extract_patches(cube_norm, gt, patch_size)
+    # X, y = extract_patches(cube_norm, gt, patch_size)
+    X, y = extract_patches(
+        cube_norm, gt,
+        win=patch_size,
+        drop_label0=True,
+        max_samples_per_class=max_samples_per_class
+    )
+    
     print(f"  Patch shape: {X.shape}, Classes: {int(y.max()) + 1}")
 
     # 3. Run k-fold CV
     print("Running Stratified K-Fold CV...")
     
+    def model_fn(input_shape, n_classes):
+        # If your build_hyper3dnet doesn't accept lr, remove lr=lr
+        return build_full3dcnn(input_shape, n_classes, lr=lr)
+    
     results = kfold_cross_validation(
-        model_fn=build_full3dcnn,
+        model_fn=model_fn,
         X=X,
         y=y,
         n_splits=n_splits,
@@ -49,7 +63,7 @@ def run_conv3d_full(
         batch_size=batch_size,
         shuffle=True,
         random_state=0,
-        verbose=0,
+        verbose=1,
     )
 
     # 4. Save results
@@ -78,6 +92,9 @@ if __name__ == "__main__":
     parser.add_argument("--splits", type=int, default=10)
     parser.add_argument("--epochs", type=int, default=50)
     parser.add_argument("--batch_size", type=int, default=16)
+    parser.add_argument("--learning_rate", type=float, default=5e-4)
+    parser.add_argument("--max_samples", type=int, default=None)
+    parser.add_argument("--verbose", action="store_true")
     args = parser.parse_args()
 
     run_conv3d_full(
@@ -86,4 +103,6 @@ if __name__ == "__main__":
         n_splits=args.splits,
         epochs=args.epochs,
         batch_size=args.batch_size,
+        lr=args.learning_rate,
+        max_samples_per_class=args.max_samples,
     )

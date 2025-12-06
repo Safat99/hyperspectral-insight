@@ -81,7 +81,7 @@ def run_lite_ibra_gss(
     # -----------------------------------------
     # 4. Reduce cube
     # -----------------------------------------
-    cube_sel = cube_norm[:, :, selected_bands]
+    # cube_sel = cube_norm[:, :, selected_bands]
 
     # -----------------------------------------
     # 5. Patch extraction

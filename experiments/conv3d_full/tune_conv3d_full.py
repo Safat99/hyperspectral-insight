@@ -35,7 +35,7 @@ def tune_conv3d_full(
     cube_norm = minmax_normalize(cube)
 
     # Hyperparameter grid
-    patch_sizes = [25]
+    patch_sizes = [25, 11]
     batch_sizes = [4, 16, 32, 64]
     lrs = [1e-3, 5e-4, 1e-4]
 
@@ -116,6 +116,7 @@ if __name__ == "__main__":
     parser.add_argument("--dataset", type=str, default="indian_pines")
     parser.add_argument("--splits", type=int, default=3)
     parser.add_argument("--epochs", type=int, default=10)
+    parser.add_argument("--max_samples", type=int, default=2000)
     args = parser.parse_args()
 
     tune_conv3d_full(

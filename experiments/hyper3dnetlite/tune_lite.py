@@ -88,8 +88,8 @@ def tune_lite(
     os.makedirs(save_dir, exist_ok=True)
 
     df = pd.DataFrame(rows)
-    json_path = os.path.join(save_dir, f"{dataset_name}_h3dnet_tuning.json")
-    csv_path = os.path.join(save_dir, f"{dataset_name}_h3dnet_tuning.csv")
+    json_path = os.path.join(save_dir, f"{dataset_name}_h3dnet_lite_tuning.json")
+    csv_path = os.path.join(save_dir, f"{dataset_name}_h3dnet_lite_tuning.csv")
 
     with open(json_path, "w") as f:
         json.dump(rows, f, indent=4)

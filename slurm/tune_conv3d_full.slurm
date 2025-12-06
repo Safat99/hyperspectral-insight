@@ -8,7 +8,7 @@
 #SBATCH --cpus-per-task=16
 #SBATCH --gpus-per-task=1
 #SBATCH --mem=128G
-#SBATCH --time=04:00:00
+#SBATCH --time=06:00:00
 
 #SBATCH --array=0-4
 #SBATCH --output=slurm_logs/%x-%A_%a.out
