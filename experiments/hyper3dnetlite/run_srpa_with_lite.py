@@ -20,8 +20,10 @@ def run_srpa(
     n_splits: int = 10,
     epochs: int = 50,
     batch_size: int = 128,
-    save_dir: str = "results/hyper3dnetlite/",
+    save_dir: str = "results/hyper3dnetlite/srpa/",
     verbose: bool = True,
+    max_samples: int = 2000,
+    lr: float = 5e-4,
 ):
     """
     SRPA (RF-Based Spectral Redundancy + Pixel Attention)
@@ -57,16 +59,26 @@ def run_srpa(
     print(f"  Selected bands ({num_bands}): {selected_bands}")
 
     # Reduce HSI
-    cube_sel = cube_norm[:, :, selected_bands]
+    # cube_sel = cube_norm[:, :, selected_bands]
 
     # Patches
-    X, y = extract_patches(cube_sel, gt, patch_size)
+    # X, y = extract_patches(cube_sel, gt, patch_size)
+    X, y = extract_patches(
+        cube_norm, gt,
+        win=patch_size,
+        drop_label0=True,
+        max_samples_per_class=max_samples
+    )
     print(f"  Patch shape: {X.shape}")
 
+    def model_fn(input_shape, n_classes):
+        # If your build_hyper3dnet doesn't accept lr, remove lr=lr
+        return build_hyper3dnet_lite(input_shape, n_classes, lr=lr)
+    
     # Cross validation
     print("Running Stratified CV...")
     results = kfold_cross_validation(
-        model_fn=build_hyper3dnet_lite,
+        model_fn=model_fn,
         X=X,
         y=y,
         n_splits=n_splits,
@@ -107,6 +119,9 @@ if __name__ == "__main__":
     parser.add_argument("--epochs", type=int, default=50)
     parser.add_argument("--batch_size", type=int, default=128) 
     parser.add_argument("--verbose", action="store_true")
+    parser.add_argument("--learning_rate", type=float, default=5e-4)
+    parser.add_argument("--max_samples", type=int, default=None)
+    
     args = parser.parse_args()
 
     run_srpa(
@@ -117,4 +132,6 @@ if __name__ == "__main__":
         epochs=args.epochs,
         batch_size=args.batch_size,
         verbose=args.verbose,
+        lr=args.learning_rate,
+        max_samples=args.max_samples,
     )
