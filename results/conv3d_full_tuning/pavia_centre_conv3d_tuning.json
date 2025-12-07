@@ -1,0 +1,218 @@
+[
+    {
+        "dataset": "pavia_centre",
+        "patch_size": 25,
+        "batch_size": 4,
+        "lr": 0.001,
+        "epochs": 20,
+        "cv_folds": 3,
+        "mean_oa": 0.9729444444444445
+    },
+    {
+        "dataset": "pavia_centre",
+        "patch_size": 25,
+        "batch_size": 4,
+        "lr": 0.0005,
+        "epochs": 20,
+        "cv_folds": 3,
+        "mean_oa": 0.9425555555555555
+    },
+    {
+        "dataset": "pavia_centre",
+        "patch_size": 25,
+        "batch_size": 4,
+        "lr": 0.0001,
+        "epochs": 20,
+        "cv_folds": 3,
+        "mean_oa": 0.8582777777777778
+    },
+    {
+        "dataset": "pavia_centre",
+        "patch_size": 25,
+        "batch_size": 16,
+        "lr": 0.001,
+        "epochs": 20,
+        "cv_folds": 3,
+        "mean_oa": 0.9381111111111111
+    },
+    {
+        "dataset": "pavia_centre",
+        "patch_size": 25,
+        "batch_size": 16,
+        "lr": 0.0005,
+        "epochs": 20,
+        "cv_folds": 3,
+        "mean_oa": 0.9054444444444444
+    },
+    {
+        "dataset": "pavia_centre",
+        "patch_size": 25,
+        "batch_size": 16,
+        "lr": 0.0001,
+        "epochs": 20,
+        "cv_folds": 3,
+        "mean_oa": 0.7961111111111112
+    },
+    {
+        "dataset": "pavia_centre",
+        "patch_size": 25,
+        "batch_size": 32,
+        "lr": 0.001,
+        "epochs": 20,
+        "cv_folds": 3,
+        "mean_oa": 0.9058333333333333
+    },
+    {
+        "dataset": "pavia_centre",
+        "patch_size": 25,
+        "batch_size": 32,
+        "lr": 0.0005,
+        "epochs": 20,
+        "cv_folds": 3,
+        "mean_oa": 0.8872777777777777
+    },
+    {
+        "dataset": "pavia_centre",
+        "patch_size": 25,
+        "batch_size": 32,
+        "lr": 0.0001,
+        "epochs": 20,
+        "cv_folds": 3,
+        "mean_oa": 0.7853888888888889
+    },
+    {
+        "dataset": "pavia_centre",
+        "patch_size": 25,
+        "batch_size": 64,
+        "lr": 0.001,
+        "epochs": 20,
+        "cv_folds": 3,
+        "mean_oa": 0.8784444444444445
+    },
+    {
+        "dataset": "pavia_centre",
+        "patch_size": 25,
+        "batch_size": 64,
+        "lr": 0.0005,
+        "epochs": 20,
+        "cv_folds": 3,
+        "mean_oa": 0.8606666666666666
+    },
+    {
+        "dataset": "pavia_centre",
+        "patch_size": 25,
+        "batch_size": 64,
+        "lr": 0.0001,
+        "epochs": 20,
+        "cv_folds": 3,
+        "mean_oa": 0.7595555555555555
+    },
+    {
+        "dataset": "pavia_centre",
+        "patch_size": 11,
+        "batch_size": 4,
+        "lr": 0.001,
+        "epochs": 20,
+        "cv_folds": 3,
+        "mean_oa": 0.9742222222222222
+    },
+    {
+        "dataset": "pavia_centre",
+        "patch_size": 11,
+        "batch_size": 4,
+        "lr": 0.0005,
+        "epochs": 20,
+        "cv_folds": 3,
+        "mean_oa": 0.9441666666666667
+    },
+    {
+        "dataset": "pavia_centre",
+        "patch_size": 11,
+        "batch_size": 4,
+        "lr": 0.0001,
+        "epochs": 20,
+        "cv_folds": 3,
+        "mean_oa": 0.8693888888888889
+    },
+    {
+        "dataset": "pavia_centre",
+        "patch_size": 11,
+        "batch_size": 16,
+        "lr": 0.001,
+        "epochs": 20,
+        "cv_folds": 3,
+        "mean_oa": 0.9504444444444445
+    },
+    {
+        "dataset": "pavia_centre",
+        "patch_size": 11,
+        "batch_size": 16,
+        "lr": 0.0005,
+        "epochs": 20,
+        "cv_folds": 3,
+        "mean_oa": 0.9183888888888889
+    },
+    {
+        "dataset": "pavia_centre",
+        "patch_size": 11,
+        "batch_size": 16,
+        "lr": 0.0001,
+        "epochs": 20,
+        "cv_folds": 3,
+        "mean_oa": 0.8482777777777777
+    },
+    {
+        "dataset": "pavia_centre",
+        "patch_size": 11,
+        "batch_size": 32,
+        "lr": 0.001,
+        "epochs": 20,
+        "cv_folds": 3,
+        "mean_oa": 0.9386111111111112
+    },
+    {
+        "dataset": "pavia_centre",
+        "patch_size": 11,
+        "batch_size": 32,
+        "lr": 0.0005,
+        "epochs": 20,
+        "cv_folds": 3,
+        "mean_oa": 0.9143888888888889
+    },
+    {
+        "dataset": "pavia_centre",
+        "patch_size": 11,
+        "batch_size": 32,
+        "lr": 0.0001,
+        "epochs": 20,
+        "cv_folds": 3,
+        "mean_oa": 0.8344999999999999
+    },
+    {
+        "dataset": "pavia_centre",
+        "patch_size": 11,
+        "batch_size": 64,
+        "lr": 0.001,
+        "epochs": 20,
+        "cv_folds": 3,
+        "mean_oa": 0.9233888888888888
+    },
+    {
+        "dataset": "pavia_centre",
+        "patch_size": 11,
+        "batch_size": 64,
+        "lr": 0.0005,
+        "epochs": 20,
+        "cv_folds": 3,
+        "mean_oa": 0.8997222222222222
+    },
+    {
+        "dataset": "pavia_centre",
+        "patch_size": 11,
+        "batch_size": 64,
+        "lr": 0.0001,
+        "epochs": 20,
+        "cv_folds": 3,
+        "mean_oa": 0.7927777777777777
+    }
+]

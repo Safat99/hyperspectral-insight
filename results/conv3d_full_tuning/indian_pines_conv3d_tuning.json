@@ -1,0 +1,218 @@
+[
+    {
+        "dataset": "indian_pines",
+        "patch_size": 25,
+        "batch_size": 4,
+        "lr": 0.001,
+        "epochs": 20,
+        "cv_folds": 3,
+        "mean_oa": 0.9075963189001991
+    },
+    {
+        "dataset": "indian_pines",
+        "patch_size": 25,
+        "batch_size": 4,
+        "lr": 0.0005,
+        "epochs": 20,
+        "cv_folds": 3,
+        "mean_oa": 0.7937502189492438
+    },
+    {
+        "dataset": "indian_pines",
+        "patch_size": 25,
+        "batch_size": 4,
+        "lr": 0.0001,
+        "epochs": 20,
+        "cv_folds": 3,
+        "mean_oa": 0.5067409154830896
+    },
+    {
+        "dataset": "indian_pines",
+        "patch_size": 25,
+        "batch_size": 16,
+        "lr": 0.001,
+        "epochs": 20,
+        "cv_folds": 3,
+        "mean_oa": 0.7074677331371548
+    },
+    {
+        "dataset": "indian_pines",
+        "patch_size": 25,
+        "batch_size": 16,
+        "lr": 0.0005,
+        "epochs": 20,
+        "cv_folds": 3,
+        "mean_oa": 0.617414440891211
+    },
+    {
+        "dataset": "indian_pines",
+        "patch_size": 25,
+        "batch_size": 16,
+        "lr": 0.0001,
+        "epochs": 20,
+        "cv_folds": 3,
+        "mean_oa": 0.3821720265441552
+    },
+    {
+        "dataset": "indian_pines",
+        "patch_size": 25,
+        "batch_size": 32,
+        "lr": 0.001,
+        "epochs": 20,
+        "cv_folds": 3,
+        "mean_oa": 0.6227223022950885
+    },
+    {
+        "dataset": "indian_pines",
+        "patch_size": 25,
+        "batch_size": 32,
+        "lr": 0.0005,
+        "epochs": 20,
+        "cv_folds": 3,
+        "mean_oa": 0.5358453692860503
+    },
+    {
+        "dataset": "indian_pines",
+        "patch_size": 25,
+        "batch_size": 32,
+        "lr": 0.0001,
+        "epochs": 20,
+        "cv_folds": 3,
+        "mean_oa": 0.36828870522175183
+    },
+    {
+        "dataset": "indian_pines",
+        "patch_size": 25,
+        "batch_size": 64,
+        "lr": 0.001,
+        "epochs": 20,
+        "cv_folds": 3,
+        "mean_oa": 0.5563538444984936
+    },
+    {
+        "dataset": "indian_pines",
+        "patch_size": 25,
+        "batch_size": 64,
+        "lr": 0.0005,
+        "epochs": 20,
+        "cv_folds": 3,
+        "mean_oa": 0.4442511122621586
+    },
+    {
+        "dataset": "indian_pines",
+        "patch_size": 25,
+        "batch_size": 64,
+        "lr": 0.0001,
+        "epochs": 20,
+        "cv_folds": 3,
+        "mean_oa": 0.33203996887167325
+    },
+    {
+        "dataset": "indian_pines",
+        "patch_size": 11,
+        "batch_size": 4,
+        "lr": 0.001,
+        "epochs": 20,
+        "cv_folds": 3,
+        "mean_oa": 0.7805785452261557
+    },
+    {
+        "dataset": "indian_pines",
+        "patch_size": 11,
+        "batch_size": 4,
+        "lr": 0.0005,
+        "epochs": 20,
+        "cv_folds": 3,
+        "mean_oa": 0.6781697282026644
+    },
+    {
+        "dataset": "indian_pines",
+        "patch_size": 11,
+        "batch_size": 4,
+        "lr": 0.0001,
+        "epochs": 20,
+        "cv_folds": 3,
+        "mean_oa": 0.46109969447196947
+    },
+    {
+        "dataset": "indian_pines",
+        "patch_size": 11,
+        "batch_size": 16,
+        "lr": 0.001,
+        "epochs": 20,
+        "cv_folds": 3,
+        "mean_oa": 0.6750051922249246
+    },
+    {
+        "dataset": "indian_pines",
+        "patch_size": 11,
+        "batch_size": 16,
+        "lr": 0.0005,
+        "epochs": 20,
+        "cv_folds": 3,
+        "mean_oa": 0.5704511105105646
+    },
+    {
+        "dataset": "indian_pines",
+        "patch_size": 11,
+        "batch_size": 16,
+        "lr": 0.0001,
+        "epochs": 20,
+        "cv_folds": 3,
+        "mean_oa": 0.42127733112132043
+    },
+    {
+        "dataset": "indian_pines",
+        "patch_size": 11,
+        "batch_size": 32,
+        "lr": 0.001,
+        "epochs": 20,
+        "cv_folds": 3,
+        "mean_oa": 0.579743910708745
+    },
+    {
+        "dataset": "indian_pines",
+        "patch_size": 11,
+        "batch_size": 32,
+        "lr": 0.0005,
+        "epochs": 20,
+        "cv_folds": 3,
+        "mean_oa": 0.4860165250377844
+    },
+    {
+        "dataset": "indian_pines",
+        "patch_size": 11,
+        "batch_size": 32,
+        "lr": 0.0001,
+        "epochs": 20,
+        "cv_folds": 3,
+        "mean_oa": 0.3803356679578416
+    },
+    {
+        "dataset": "indian_pines",
+        "patch_size": 11,
+        "batch_size": 64,
+        "lr": 0.001,
+        "epochs": 20,
+        "cv_folds": 3,
+        "mean_oa": 0.5231808445685574
+    },
+    {
+        "dataset": "indian_pines",
+        "patch_size": 11,
+        "batch_size": 64,
+        "lr": 0.0005,
+        "epochs": 20,
+        "cv_folds": 3,
+        "mean_oa": 0.464163607632946
+    },
+    {
+        "dataset": "indian_pines",
+        "patch_size": 11,
+        "batch_size": 64,
+        "lr": 0.0001,
+        "epochs": 20,
+        "cv_folds": 3,
+        "mean_oa": 0.37655791770511166
+    }
+]
