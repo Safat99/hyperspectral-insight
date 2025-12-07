@@ -27,6 +27,7 @@ def run_h3dnet_with_pca_cv(
     batch_size: int = 16,
     lr: float = 1e-4,
     save_dir: str = "results/hyper3dnet/",
+    max_samples = max_samples,
 ):
 
     print(f"\n=== Hyper3DNet + PCA (≤ {max_components} comps) on {dataset_name} ===")
@@ -36,7 +37,13 @@ def run_h3dnet_with_pca_cv(
     cube_norm = minmax_normalize(cube)
 
     # Extract pre-PCA patches
-    X_full, y_full = extract_patches(cube_norm, gt, patch_size)
+    # X_full, y_full = extract_patches(cube_norm, gt, patch_size)
+    X_full, y_full = extract_patches(
+        cube_norm, gt, 
+        win=patch_size,
+        drop_label0=True,
+        max_samples_per_class=max_samples)
+    
     n_classes = int(y_full.max() + 1)
     print(f"Total patches: {len(X_full)} | Classes: {n_classes}")
 
@@ -175,6 +182,7 @@ if __name__ == "__main__":
     parser.add_argument("--epochs", type=int, default=50)
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--learning_rate", type=float, default=1e-4)
+    parser.add_argument("--max_samples", type=int, default=2000)
     args = parser.parse_args()
 
     run_h3dnet_with_pca_cv(
@@ -186,4 +194,5 @@ if __name__ == "__main__":
         epochs=args.epochs,
         batch_size=args.batch_size,
         lr=args.learning_rate,
+        max_samples=args.max_samples,
     )

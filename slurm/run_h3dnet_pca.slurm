@@ -8,12 +8,14 @@
 #SBATCH --cpus-per-task=16
 #SBATCH --gpus-per-task=1
 #SBATCH --mem=128G
-#SBATCH --time=04:00:00
+#SBATCH --time=05:00:00
 #SBATCH --output=slurm_logs/%x-%j.out
 #SBATCH --error=slurm_logs/%x-%j.err
 
 echo "===== Hyper3DNet PCA CV Started ====="
-echo "Dataset: $1"
+# echo "Dataset: $1"
+DATASETS=("salinas" "pavia_university" "pavia_centre")
+DATASET=${DATASETS[$SLURM_ARRAY_TASK_ID]}
 
 module load CUDA/12.2.0
 module load Anaconda3/2024.02-1
@@ -23,13 +25,14 @@ export PYTHONPATH="$SLURM_SUBMIT_DIR"
 mkdir -p slurm_logs
 
 python3 experiments/hyper3dnet/run_hyper3dnet_pca_cv.py \
-    --dataset "$1" \
+    --dataset "DATASET" \
     --patch 25 \
     --var_thresh 0.99 \
     --max_components 30 \
-    --splits 5 \
+    --splits 10 \
     --epochs 50 \
     --batch_size 4 \
-    --learning_rate 1e-4
+    --learning_rate 1e-4 \
+    --max_samples 2000
 
 echo "===== Hyper3DNet PCA Completed ====="

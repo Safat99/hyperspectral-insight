@@ -17,6 +17,7 @@ def run_h3dnet_original_cv(
     batch_size: int = 16,
     lr: float = 1e-4,
     save_dir: str = "results/hyper3dnet/",
+    max_samples: int = 2000
 ):
     """
     Full-band Hyper3DNet, NO PCA / band-selection.
@@ -45,14 +46,18 @@ def run_h3dnet_original_cv(
     cube_norm = minmax_normalize(cube)
 
     # 3) Extract patches → (N, H, W, B, 1), y → (N,)
-    X, y = extract_patches(cube_norm, gt, patch_size)
+    X, y = extract_patches(
+        cube_norm, gt, 
+        win=patch_size,
+        drop_label0=True,
+        max_samples_per_class=max_samples)
 
     print(f"  Patches shape: {X.shape}, Labels shape: {y.shape}")
     print(f"  #classes (excluding 0): {int(y.max()) + 1}")
     
     def model_fn(input_shape, n_classes):
         # If your build_hyper3dnet doesn't accept lr, remove lr=lr
-        return build_hyper3dnet(input_shape, n_classes, lr=lr)
+        return build_hyper3dnet(input_shape,    n_classes, lr=lr)
 
     # 4) Run stratified K-fold cross-validation
     results = kfold_cross_validation(
@@ -96,6 +101,7 @@ if __name__ == "__main__":
     parser.add_argument("--epochs", type=int, default=50)
     parser.add_argument("--batch_size", type=int, default=16)
     parser.add_argument("--learning_rate", type=float, default=1e-4)
+    parser.add_argument("--max_samples", type=int, default=2000)
 
     args = parser.parse_args()
 
@@ -106,4 +112,5 @@ if __name__ == "__main__":
         epochs=args.epochs,
         batch_size=args.batch_size,
         lr=args.learning_rate,
+        max_samples=args.max_samples
     )
