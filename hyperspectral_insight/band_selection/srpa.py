@@ -133,65 +133,70 @@ def run_srpa_pipeline(
 
 ################ 3dcnn spra mechanism ##########################
 
-def build_srpa_3dcnn(num_bands, num_classes=3, lr=1e-3):
+class SpatialMean(layers.Layer):
+    """Average over H and W dimensions only."""
+    def call(self, x):
+        return tf.reduce_mean(x, axis=[1, 2])  # (B, bands, C)
+
+
+def build_srpa_3dcnn(num_bands, num_classes):
     """
-    Input shape: (25, 25, num_bands, 1)
-    Output: (class_logits, attention_weights)
+    Input : (25, 25, B, 1)
+    Output: (class_logits, attention_weights[B])
     """
+
     inp = layers.Input(shape=(25, 25, num_bands, 1))
 
-    # Conv1 + MaxPool
+    # ---------------------------- 3D CNN FRONT ----------------------------
     x = layers.Conv3D(8, (3,3,3), padding="same", activation="relu")(inp)
     x = layers.MaxPool3D(pool_size=(2,2,1))(x)
 
-    # Conv2
     x = layers.Conv3D(16, (3,3,3), padding="same", activation="relu")(x)
+    # x shape is now (batch, H/2, W/2, B, 16)
 
-    # ---- Global pooling (keep spectral axis) ----
-    gp = layers.GlobalAveragePooling3D(keepdims=False)(x)  # (batch, 16)
-    gp = layers.Reshape((num_bands, 16))(gp)               # (batch, B, 16)
+    # ------------------- GLOBAL SPATIAL AVG (KEEP BANDS) -------------------
+    # result shape: (batch, B, 16)
+    x = SpatialMean()(x)
 
-    # ---- Per-band feature → mean across channel-dim ----
-    band_feat = tf.reduce_mean(gp, axis=-1)                # (batch, B)
-
-    # ----------------- SE BLOCK --------------------
+    # ------------------------ SE ATTENTION BLOCK ---------------------------
+    # x: (batch, B, 16)
+    band_feat = layers.GlobalAveragePooling1D()(x)  # (batch, B)
+    
     r = max(1, num_bands // 4)
     se = layers.Dense(r, activation="relu")(band_feat)
-    se = layers.Dense(num_bands, activation="sigmoid")(se)  # (batch, B)
+    se = layers.Dense(num_bands, activation="sigmoid")(se)
 
-    # ---------------- Classification ----------------
-    flat = layers.Flatten()(gp)
+    # --------------------------- CLASSIFIER --------------------------------
+    flat = layers.Flatten()(x)
     out = layers.Dense(num_classes, activation="softmax")(flat)
 
     model = models.Model(inp, [out, se])
-
     model.compile(
-        optimizer=tf.keras.optimizers.Adam(learning_rate=lr),
+        optimizer=tf.keras.optimizers.Adam(1e-3),
         loss=["categorical_crossentropy", None],
-        metrics=["accuracy"]
+        metrics=[["accuracy"], None]
     )
-
     return model
 
+
+
+# ---------------------------------------------------------
+# Full SRPA selection
+# ---------------------------------------------------------
 
 def srpa_selection_3dcnn(
     cube, gt,
     patch_size=25,
     num_bands=20,
-    # epochs=25,
+    epochs=2,
     batch_size=32,
     lambda_penalty=0.3,
 ):
-    """
-    cube: (H, W, B)
-    gt:   (H, W)
-    """
     H, W, B = cube.shape
 
     # -------------------- Extract Patches --------------------
     patches = []
     labels = []
-
     pad = patch_size // 2
 
     padded = np.pad(cube, ((pad,pad),(pad,pad),(0,0)), mode="reflect")
@@ -199,35 +204,34 @@ def srpa_selection_3dcnn(
 
     for i in range(H):
         for j in range(W):
-            if gt[i,j] == 0:  # ignore unlabeled
-                continue
-            patch = padded[i:i+patch_size, j:j+patch_size, :]
-            patches.append(patch)
+            if gt[i,j] == 0: continue
+            patches.append(padded[i:i+patch_size, j:j+patch_size, :])
             labels.append(gt[i,j])
 
-    patches = np.array(patches)                      # (N, 25,25,B)
+    patches = np.array(patches)          # (N,25,25,B)
     labels = np.array(labels)
 
-    # One-hot labels
-    num_classes = labels.max()
-    y_oh = tf.keras.utils.to_categorical(labels-1, num_classes=num_classes)
+    # Convert labels to 1..C → 0..C-1 → one-hot
+    labels -= labels.min()
+    num_classes = labels.max() + 1
+    y_oh = tf.keras.utils.to_categorical(labels, num_classes=num_classes)
 
-    X = patches[..., np.newaxis]                     # (N,25,25,B,1)
+    X = patches[..., np.newaxis]         # (N,25,25,B,1)
 
-    # -------------------- Build Model --------------------
+    # -------------------- Build SRPA Model --------------------
     model = build_srpa_3dcnn(num_bands=B, num_classes=num_classes)
 
     # -------------------- Train -------------------------
     model.fit(
-        X, [y_oh, np.zeros((len(X), B))],  # second output ignored
-        epochs=2,
+        X, [y_oh, np.zeros((len(X), B))],
+        epochs=epochs,
         batch_size=batch_size,
         verbose=1
     )
 
     # -------------------- Collect Attention ----------------
     _, attn = model.predict(X, batch_size=batch_size, verbose=0)
-    attn_mean = attn.mean(axis=0)        # (B,)
+    attn_mean = attn.mean(axis=0)
 
     # -------------------- Compute Redundancy ---------------
     X_flat = cube.reshape(-1, B)
@@ -239,3 +243,4 @@ def srpa_selection_3dcnn(
     topk = np.argsort(srpa_score)[::-1][:num_bands]
 
     return topk.tolist(), srpa_score
+

@@ -9,19 +9,23 @@
 #SBATCH --mem=128G
 #SBATCH --time=04:00:00
 
-#SBATCH --array=0-4
+#SBATCH --array=0-14
 #SBATCH --output=slurm_logs/%x-%A_%a.out
 #SBATCH --error=slurm_logs/%x-%A_%a.err
 
 echo "===== Hyper3DNet-Lite SRPA CV Started ====="
 
 DATASETS=("indian_pines" "salinas" "pavia_university" "pavia_centre" "ksc")
-# DATASETS=("salinas" "pavia_centre")
-DATASET=${DATASETS[$SLURM_ARRAY_TASK_ID]}
+NUM_BANDS=(5 20 50)
 
-NUM_BANDS=(5, 20, 50)
+dataset_id=$(( SLURM_ARRAY_TASK_ID / 3 ))
+band_id=$(( SLURM_ARRAY_TASK_ID % 3 ))
+
+DATASET=${DATASETS[$dataset_id]}
+NB=${NUM_BANDS[$band_id]}
 
 echo "Running dataset: $DATASET"
+echo "Num bands: $NB"
 echo "Array task: $SLURM_ARRAY_TASK_ID"
 
 module load CUDA/12.2.0
@@ -35,7 +39,7 @@ mkdir -p slurm_logs
 # -----------------------------
 # Run Hyper3DNet-Lite CV
 # -----------------------------
-python3 experiments/hyper3dnetlite/run_lite_ibra_gss.py \
+python3 experiments/hyper3dnetlite/run_srpa_with_lite.py \
     --dataset "$DATASET" \
     --patch 25 \
     --splits 5 \
@@ -43,4 +47,4 @@ python3 experiments/hyper3dnetlite/run_lite_ibra_gss.py \
     --max_samples 2000 \
     --batch_size 128 \
     --learning_rate 5e-4 \
-    --num_bands "$num_bands"
+    --num_bands "$NB"
