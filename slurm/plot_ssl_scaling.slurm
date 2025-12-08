@@ -7,11 +7,12 @@
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=32G
 #SBATCH --time=01:00:00
-#SBATCH --output=slurm_logs/%x-%j.out
-#SBATCH --error=slurm_logs/%x-%j.err
+
+#SBATCH --array=0-4
+#SBATCH --output=slurm_logs/%x-%A_%a.out
+#SBATCH --error=slurm_logs/%x-%A_%a.err
 
 echo "===== SSL Plotting Started ====="
-
 DATASETS=("salinas" "pavia_university" "pavia_centre" "ksc" "indian_pines")
 # DATASETS=("salinas" "pavia_centre")
 DATASET=${DATASETS[$SLURM_ARRAY_TASK_ID]}
