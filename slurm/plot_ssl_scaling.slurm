@@ -12,6 +12,10 @@
 
 echo "===== SSL Plotting Started ====="
 
+DATASETS=("salinas" "pavia_university" "pavia_centre" "ksc" "indian_pines")
+# DATASETS=("salinas" "pavia_centre")
+DATASET=${DATASETS[$SLURM_ARRAY_TASK_ID]}
+
 module load Anaconda3/2024.02-1
 source ~/.bashrc
 conda activate hsi_tf
@@ -19,7 +23,7 @@ export PYTHONPATH="$SLURM_SUBMIT_DIR"
 mkdir -p slurm_logs
 
 python3 experiments/ssl/plot_ssl_scaling_result.py \
-    --json results/scaling_ssl/"$1"_ssl_scaling_results.json \
-    --save results/scaling_ssl/"$1"_ssl_scaling_plot.png
+    --json results/scaling_ssl/updated/"$DATASET"_ssl_b128_n5_ssl_scaling_results.json \
+    --save results/scaling_ssl/updated/"$DATASET"_ssl_b128_n5_scaling_plot.png
 
 echo "===== SSL Plotting Completed ====="
