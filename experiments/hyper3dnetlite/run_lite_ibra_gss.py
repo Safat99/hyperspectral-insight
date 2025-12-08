@@ -20,7 +20,7 @@ def run_lite_ibra_gss(
     n_splits: int = 10,
     epochs: int = 50,
     batch_size: int = 128,
-    save_dir: str = "results/hyper3dnetlite/",
+    save_dir: str = "results/hyper3dnetlite/reduced_ibra_gss/",
     verbose: bool = True,
     max_samples_per_class: int = None,
     lr: float = 1e-3,
@@ -56,7 +56,6 @@ def run_lite_ibra_gss(
     # 1. Load dataset
     # -----------------------------------------
     cube, gt = load_dataset(dataset_name)
-
     # -----------------------------------------
     # 2. Normalize per band
     # -----------------------------------------
@@ -81,14 +80,14 @@ def run_lite_ibra_gss(
     # -----------------------------------------
     # 4. Reduce cube
     # -----------------------------------------
-    # cube_sel = cube_norm[:, :, selected_bands]
+    cube_sel = cube_norm[:, :, selected_bands]
 
     # -----------------------------------------
     # 5. Patch extraction
     # -----------------------------------------
     # X, y = extract_patches(cube_sel, gt, patch_size)
     X, y = extract_patches(
-        cube_norm, gt,
+        cube_sel, gt,
         win=patch_size,
         drop_label0=True,
         max_samples_per_class=max_samples_per_class
@@ -125,11 +124,11 @@ def run_lite_ibra_gss(
 
     out_json = os.path.join(
         save_dir,
-        f"{dataset_name}_lite_ibra_gss_{num_bands}bands_cv.json",
+        f"{dataset_name}_lite_ibra_gss_{num_bands}bands_{n_splits}fold_cv.json",
     )
     out_bands = os.path.join(
         save_dir,
-        f"{dataset_name}_lite_ibra_gss_{num_bands}bands.npy",
+        f"{dataset_name}_lite_ibra_gss_{num_bands}bands_{n_splits}fold_cv.npy",
     )
 
     with open(out_json, "w") as f:

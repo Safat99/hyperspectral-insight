@@ -36,7 +36,7 @@ mkdir -p slurm_logs
 python3 experiments/hyper3dnetlite/run_lite_ibra_gss.py \
     --dataset "$DATASET" \
     --patch 25 \
-    --splits 5 \
+    --splits 10 \
     --epochs 50 \
     --max_samples 2000 \
     --batch_size 128 \
