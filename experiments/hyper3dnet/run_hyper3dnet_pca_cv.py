@@ -27,7 +27,7 @@ def run_h3dnet_with_pca_cv(
     batch_size: int = 16,
     lr: float = 1e-4,
     save_dir: str = "results/hyper3dnet/",
-    max_samples = max_samples,
+    max_samples: int = 2000,
 ):
 
     print(f"\n=== Hyper3DNet + PCA (≤ {max_components} comps) on {dataset_name} ===")
@@ -132,7 +132,7 @@ def run_h3dnet_with_pca_cv(
     os.makedirs(save_dir, exist_ok=True)
 
     # ---------------- Save clean JSON ----------------
-    out_json = os.path.join(save_dir, f"{dataset_name}_h3dnet_pca_cv.json")
+    out_json = os.path.join(save_dir, f"{dataset_name}_h3dnet_pca_10fold_cv.json")
     with open(out_json, "w") as f:
         json.dump({
             "fold_metrics": fold_metrics,
@@ -147,12 +147,12 @@ def run_h3dnet_with_pca_cv(
         "fold": np.arange(1, n_splits+1),
         "components": pca_components_list
     }).to_csv(
-        os.path.join(save_dir, f"{dataset_name}_h3dnet_pca_components.csv"),
+        os.path.join(save_dir, f"{dataset_name}_h3dnet_pca_10fold_components.csv"),
         index=False
     )
 
     # Save histories
-    out_hist = os.path.join(save_dir, f"{dataset_name}_h3dnet_pca_histories.npy")
+    out_hist = os.path.join(save_dir, f"{dataset_name}_h3dnet_pca_10fold_histories.npy")
     np.save(out_hist, fold_histories, allow_pickle=True)
 
     print("\n=== PCA Hyper3DNet DONE ===")

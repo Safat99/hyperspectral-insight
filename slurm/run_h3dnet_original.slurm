@@ -9,8 +9,9 @@
 #SBATCH --gpus-per-task=1
 #SBATCH --mem=128G
 #SBATCH --time=05:00:00
-#SBATCH --output=slurm_logs/%x-%j.out
-#SBATCH --error=slurm_logs/%x-%j.err
+#SBATCH --array=0-2
+#SBATCH --output=slurm_logs/%x-%A_%a.out
+#SBATCH --error=slurm_logs/%x-%A_%a.err
 
 echo "===== Hyper3DNet FULL-BAND CV Started ====="
 # echo "Dataset: $1"
@@ -28,7 +29,7 @@ export PYTHONPATH="$SLURM_SUBMIT_DIR"
 mkdir -p slurm_logs
 
 python3 experiments/hyper3dnet/run_hyper3dnet_original_cv.py \
-    --dataset "DATASET" \
+    --dataset "$DATASET" \
     --patch 25 \
     --splits 10 \
     --epochs 50 \

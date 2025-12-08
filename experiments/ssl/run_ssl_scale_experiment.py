@@ -59,7 +59,6 @@ def run_ssl_scaling_experiment(
     epochs_baseline=30,
     epochs_ssl_per_iter=15,
     batch_size: int=128,
-    batch_size=4,
     save_dir="results/scaling_ssl/",
     random_state=0,
     lr: float = 5e-4,

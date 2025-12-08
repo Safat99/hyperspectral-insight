@@ -15,7 +15,7 @@
 #SBATCH --error=slurm_logs/%x-%A_%a.err
 
 echo "===== SSL Scaling Experiment Started ====="
-DATASETS=("salinas" "pavia_university" "pavia_centre" "ksc", "indian_pines")
+DATASETS=("salinas" "pavia_university" "pavia_centre" "ksc" "indian_pines")
 # DATASETS=("salinas" "pavia_centre")
 DATASET=${DATASETS[$SLURM_ARRAY_TASK_ID]}
 
@@ -26,7 +26,7 @@ conda activate hsi_tf
 export PYTHONPATH="$SLURM_SUBMIT_DIR"
 mkdir -p slurm_logs
 
-python3 experiments/ssl/run_ssl_scaling_experiment.py \
+python3 experiments/ssl/run_ssl_scale_experiment.py \
     --dataset "$DATASET" \
     --max_samples 2000 \
     --batch_size 128 \

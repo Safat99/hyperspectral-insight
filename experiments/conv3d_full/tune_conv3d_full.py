@@ -71,7 +71,6 @@ def tune_conv3d_full(
             shuffle=True,
             random_state=0,
             verbose=0,
-            lr=lr,  # <-- if your CV supports passing extra args
         )
 
         mean_oa = results["mean_metrics"]["oa"]
