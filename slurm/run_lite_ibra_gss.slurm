@@ -9,18 +9,27 @@
 #SBATCH --mem=128G
 #SBATCH --time=04:00:00
 
-#SBATCH --array=0-4
+#SBATCH --array=0-9
 #SBATCH --output=slurm_logs/%x-%A_%a.out
 #SBATCH --error=slurm_logs/%x-%A_%a.err
 
-echo "===== Hyper3DNet-Lite FULL-BAND CV Started ====="
+echo "===== Hyper3DNet-Lite IBRA_GSS Started ====="
 
 DATASETS=("indian_pines" "salinas" "pavia_university" "pavia_centre" "ksc")
-# DATASETS=("salinas" "pavia_centre")
-DATASET=${DATASETS[$SLURM_ARRAY_TASK_ID]}
+NUM_BANDS_LIST=(5 50)
 
-echo "Running dataset: $DATASET"
-echo "Array task: $SLURM_ARRAY_TASK_ID"
+# -----------------------------
+# Compute indices
+# -----------------------------
+dataset_id=$(( SLURM_ARRAY_TASK_ID / 2 ))   # 0–4
+bands_id=$(( SLURM_ARRAY_TASK_ID % 2 ))     # 0–1
+
+DATASET=${DATASETS[$dataset_id]}
+NUM_BANDS=${NUM_BANDS_LIST[$bands_id]}
+
+echo "SLURM TASK ID: $SLURM_ARRAY_TASK_ID"
+echo "Selected dataset: $DATASET"
+echo "Selected number of bands: $NUM_BANDS"
 
 module load CUDA/12.2.0
 module load Anaconda3/2024.02-1
@@ -30,14 +39,12 @@ conda activate hsi_tf
 export PYTHONPATH="$SLURM_SUBMIT_DIR"
 mkdir -p slurm_logs
 
-# -----------------------------
-# Run Hyper3DNet-Lite CV
-# -----------------------------
 python3 experiments/hyper3dnetlite/run_lite_ibra_gss.py \
     --dataset "$DATASET" \
+    --num_bands "$NUM_BANDS" \
     --patch 25 \
     --splits 10 \
     --epochs 50 \
-    --max_samples 2000 \
     --batch_size 128 \
-    --learning_rate 5e-4
+    --learning_rate 5e-4 \
+    --max_samples 2000
