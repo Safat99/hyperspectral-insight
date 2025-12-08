@@ -20,8 +20,10 @@ def run_ssep(
     n_splits: int = 10,
     epochs: int = 50,
     batch_size: int = 128,
-    save_dir: str = "results/hyper3dnetlite/",
+    save_dir: str = "results/hyper3dnetlite/ssep/",
     verbose: bool = True,
+    max_samples_per_class: int = 2000,
+    lr: float = 5e-4
 ):
     """
     SSEP band selection + Hyper3DNet-Lite CV evaluation.
@@ -58,24 +60,36 @@ def run_ssep(
     selected_bands = run_ssep_pipeline(
         cube=cube_norm,
         gt=gt,
-        nbands=num_bands,
+        k=num_bands,
         verbose=verbose,
     )
 
     print(f"  Selected bands ({num_bands}): {selected_bands}")
+    print(f"  {selected_bands}")
 
     # Reduce cube
     cube_sel = cube_norm[:, :, selected_bands]
 
     # Extract patches
-    X, y = extract_patches(cube_sel, gt, patch_size)
+    # X, y = extract_patches(cube_sel, gt, patch_size)
+    X, y = extract_patches(
+        cube_sel, gt,
+        win=patch_size,
+        drop_label0=True,
+        max_samples_per_class=max_samples_per_class
+    )
     print(f"  Patch shape: {X.shape}")
     print(f"  #classes: {y.max()+1}")
 
     # CV evaluation
+    
+    def model_fn(input_shape, n_classes):
+        # If your build_hyper3dnet doesn't accept lr, remove lr=lr
+        return build_hyper3dnet_lite(input_shape, n_classes, lr=lr)
+    
     print("Running Stratified CV...")
     results = kfold_cross_validation(
-        model_fn=build_hyper3dnet_lite,
+        model_fn=model_fn,
         X=X,
         y=y,
         n_splits=n_splits,
@@ -83,13 +97,13 @@ def run_ssep(
         batch_size=batch_size,
         shuffle=True,
         random_state=0,
-        verbose=0,
+        verbose=verbose,
     )
 
     # Save
     os.makedirs(save_dir, exist_ok=True)
-    out_json = os.path.join(save_dir, f"{dataset_name}_ssep_{num_bands}bands_hyper3dnetlite_cv.json")
-    out_bands = os.path.join(save_dir, f"{dataset_name}_ssep_{num_bands}bands_hyper3dnetlite.npy")
+    out_json = os.path.join(save_dir, f"{dataset_name}_ssep_{num_bands}bands_hyper3dnetlite_{n_splits}fold_cv.json")
+    out_bands = os.path.join(save_dir, f"{dataset_name}_ssep_{num_bands}bands_hyper3dnetlite_{n_splits}fold.npy")
 
     with open(out_json, "w") as f:
         json.dump(results, f, indent=4)
@@ -116,6 +130,8 @@ if __name__ == "__main__":
     parser.add_argument("--epochs", type=int, default=50)
     parser.add_argument("--batch_size", type=int, default=128)
     parser.add_argument("--verbose", action="store_true")
+    parser.add_argument("--learning_rate", type=float, default=5e-4)
+    parser.add_argument("--max_samples", type=int, default=None)
     args = parser.parse_args()
 
     run_ssep(
@@ -126,4 +142,6 @@ if __name__ == "__main__":
         epochs=args.epochs,
         batch_size=args.batch_size,
         verbose=args.verbose,
+        lr=args.learning_rate,
+        max_samples_per_class=args.max_samples,
     )

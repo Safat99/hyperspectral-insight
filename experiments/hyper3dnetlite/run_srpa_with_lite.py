@@ -97,8 +97,8 @@ def run_srpa(
 
     # Save
     os.makedirs(save_dir, exist_ok=True)
-    out_json = os.path.join(save_dir, f"{dataset_name}_lite_srpa_{num_bands}bands_cv.json")
-    out_bands = os.path.join(save_dir, f"{dataset_name}_lite_srpa_{num_bands}bands.npy")
+    out_json = os.path.join(save_dir, f"{dataset_name}_lite_srpa_{num_bands}bands_{n_splits}fold_cv.json")
+    out_bands = os.path.join(save_dir, f"{dataset_name}_lite_srpa_{num_bands}bands_{n_splits}fold_cv.npy")
 
     with open(out_json, "w") as f:
         json.dump(results, f, indent=4)

@@ -59,58 +59,83 @@ def select_bands_ssep(
     return [int(b) for b in selected]
 
 
+# def run_ssep_pipeline(
+#     cube: np.ndarray,
+#     gt: np.ndarray,
+#     k: int = 20,
+#     model_type: str = "rf",
+#     verbose: bool = True,
+# ) -> Tuple[List[int], float, float]:
+#     """
+#     Full SSEP pipeline + quick RF/SVM evaluation.
+
+#     Args:
+#         cube: (H, W, B)
+#         gt:   (H, W)
+#         k:    number of bands.
+#         model_type: 'rf' or 'svm'
+#         verbose: print logs
+
+#     Returns:
+#         selected_bands: list of selected band indices
+#         acc: training-set accuracy of quick classifier
+#         f1:  macro-F1 of quick classifier
+#     """
+#     if verbose:
+#         print("Running SSEP...")
+
+#     H, W, B = cube.shape
+#     cube = img_as_float(cube)
+#     mask = gt.astype(int)
+
+#     selected_bands = select_bands_ssep(cube, mask, k=k)
+#     if verbose:
+#         print(f"Top-{k} bands (SSEP): {selected_bands}")
+
+#     cube_flat = cube.reshape(-1, B)
+#     mask_flat = mask.flatten()
+#     valid = mask_flat > 0
+#     X = cube_flat[valid][:, selected_bands]
+#     y = mask_flat[valid]
+
+#     if model_type == "rf":
+#         clf = RandomForestClassifier(n_estimators=100, random_state=0)
+#     else:
+#         from sklearn.svm import SVC
+#         clf = SVC(kernel="rbf")
+
+#     clf.fit(X, y)
+#     y_pred = clf.predict(X)
+
+#     acc = float(accuracy_score(y, y_pred))
+#     f1 = float(f1_score(y, y_pred, average="macro"))
+
+#     if verbose:
+#         print(f"[SSEP] Accuracy={acc:.4f}  F1={f1:.4f}")
+
+#     return selected_bands, acc, f1
+
 def run_ssep_pipeline(
     cube: np.ndarray,
     gt: np.ndarray,
     k: int = 20,
-    model_type: str = "rf",
     verbose: bool = True,
-) -> Tuple[List[int], float, float]:
+):
     """
-    Full SSEP pipeline + quick RF/SVM evaluation.
-
-    Args:
-        cube: (H, W, B)
-        gt:   (H, W)
-        k:    number of bands.
-        model_type: 'rf' or 'svm'
-        verbose: print logs
-
-    Returns:
-        selected_bands: list of selected band indices
-        acc: training-set accuracy of quick classifier
-        f1:  macro-F1 of quick classifier
+    SSEP band-selection
+    Returns only the selected band indices.
     """
     if verbose:
-        print("Running SSEP...")
+        print("Running SSEP (band-selection only)...")
 
-    H, W, B = cube.shape
     cube = img_as_float(cube)
     mask = gt.astype(int)
 
+    # compute top-k bands
     selected_bands = select_bands_ssep(cube, mask, k=k)
-    if verbose:
-        print(f"Top-{k} bands (SSEP): {selected_bands}")
-
-    cube_flat = cube.reshape(-1, B)
-    mask_flat = mask.flatten()
-    valid = mask_flat > 0
-    X = cube_flat[valid][:, selected_bands]
-    y = mask_flat[valid]
-
-    if model_type == "rf":
-        clf = RandomForestClassifier(n_estimators=100, random_state=0)
-    else:
-        from sklearn.svm import SVC
-        clf = SVC(kernel="rbf")
-
-    clf.fit(X, y)
-    y_pred = clf.predict(X)
-
-    acc = float(accuracy_score(y, y_pred))
-    f1 = float(f1_score(y, y_pred, average="macro"))
 
     if verbose:
-        print(f"[SSEP] Accuracy={acc:.4f}  F1={f1:.4f}")
+        print(f"Selected top-{k} SSEP bands: {selected_bands}")
 
-    return selected_bands, acc, f1
+    # return ONLY band indices
+    return selected_bands
