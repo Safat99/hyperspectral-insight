@@ -16,12 +16,14 @@ from hyperspectral_insight.models.attention_conv3d_full import build_full3dcnn
 def run_3dcnn_ssep(
     dataset_name: str,
     num_bands: int = 20,
-    patch_size: int = 11,
+    patch_size: int = 25,
     n_splits: int = 10,
     epochs: int = 50,
-    batch_size: int = 16,
-    save_dir: str = "results/conv3d_full/",
+    batch_size: int = 4,
+    save_dir: str = "results/conv3d_full/ssep",
     verbose: bool = True,
+    max_samples_per_class: int = 2000,
+    lr: float = 1e-3
 ):
     """
     Full 3D CNN with SSEP band selection.
@@ -40,23 +42,34 @@ def run_3dcnn_ssep(
     selected_bands = run_ssep_pipeline(
         cube=cube_norm,
         gt=gt,
-        nbands=num_bands,
+        k=num_bands,
         verbose=verbose,
     )
 
     print(f"  Selected bands ({num_bands}): {selected_bands}")
+    print(f"  {selected_bands}")
 
     # 4. Reduce cube
     cube_sel = cube_norm[:, :, selected_bands]
 
     # 5. Extract patches
-    X, y = extract_patches(cube_sel, gt, patch_size)
+    # X, y = extract_patches(cube_sel, gt, patch_size)
+    X, y = extract_patches(
+        cube_sel, gt,
+        win=patch_size,
+        drop_label0=True,
+        max_samples_per_class=max_samples_per_class
+    )
     print(f"  Patch shape: {X.shape}, #classes: {int(y.max()) + 1}")
 
     # 6. Stratified CV with 3D CNN
+    
+    def model_fn(input_shape, n_classes):
+        return build_full3dcnn(input_shape, n_classes, lr=lr)
+    
     print("Running Stratified K-Fold CV...")
     results = kfold_cross_validation(
-        model_fn=build_full3dcnn,
+        model_fn=model_fn,
         X=X,
         y=y,
         n_splits=n_splits,
@@ -70,10 +83,10 @@ def run_3dcnn_ssep(
     # 7. Save
     os.makedirs(save_dir, exist_ok=True)
     out_json = os.path.join(
-        save_dir, f"{dataset_name}_3dcnn_ssep_{num_bands}bands_cv.json"
+        save_dir, f"{dataset_name}_3dcnn_ssep_{num_bands}bands_{n_splits}fold_cv.json"
     )
     out_bands = os.path.join(
-        save_dir, f"{dataset_name}_3dcnn_ssep_{num_bands}bands.npy"
+        save_dir, f"{dataset_name}_3dcnn_ssep_{num_bands}bands_{n_splits}fold.npy"
     )
 
     with open(out_json, "w") as f:
@@ -96,11 +109,13 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset", type=str, required=True)
     parser.add_argument("--num_bands", type=int, default=20)
-    parser.add_argument("--patch", type=int, default=11)
+    parser.add_argument("--patch", type=int, default=25)
     parser.add_argument("--splits", type=int, default=10)
     parser.add_argument("--epochs", type=int, default=50)
-    parser.add_argument("--batch_size", type=int, default=16)
+    parser.add_argument("--batch_size", type=int, default=4)
     parser.add_argument("--verbose", action="store_true")
+    parser.add_argument("--learning_rate", type=float, default=1e-3)
+    parser.add_argument("--max_samples", type=int, default=2000)
     args = parser.parse_args()
 
     run_3dcnn_ssep(
@@ -111,4 +126,6 @@ if __name__ == "__main__":
         epochs=args.epochs,
         batch_size=args.batch_size,
         verbose=args.verbose,
+        lr=args.learning_rate,
+        max_samples_per_class=args.max_samples,
     )
