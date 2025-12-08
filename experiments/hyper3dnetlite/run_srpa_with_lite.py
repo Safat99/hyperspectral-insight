@@ -8,7 +8,7 @@ from hyperspectral_insight.data.loaders import load_dataset
 from hyperspectral_insight.data.normalization import minmax_normalize
 from hyperspectral_insight.data.patches import extract_patches
 
-from hyperspectral_insight.band_selection.srpa import run_srpa_pipeline
+from hyperspectral_insight.band_selection.srpa import run_srpa_pipeline, srpa_selection_3dcnn
 from hyperspectral_insight.evaluation.cross_validation import kfold_cross_validation
 from hyperspectral_insight.models.hyper3dnet_lite import build_hyper3dnet_lite
 
@@ -49,22 +49,28 @@ def run_srpa(
 
     # SRPA band-selection
     print("Running SRPA band selection...")
-    selected_bands = run_srpa_pipeline(
-        cube=cube_norm,
-        gt=gt,
-        nbands=num_bands,
-        verbose=verbose,
-    )
+    # selected_bands = run_srpa_pipeline(
+    #     cube=cube_norm,
+    #     gt=gt,
+    #     k=num_bands,
+    #     verbose=verbose,
+    # )
+    selected_bands, scores = srpa_selection_3dcnn(
+    cube=cube_norm,
+    gt=gt,
+    patch_size=patch_size,
+    num_bands=num_bands,
+)
 
     print(f"  Selected bands ({num_bands}): {selected_bands}")
 
-    # Reduce HSI
-    # cube_sel = cube_norm[:, :, selected_bands]
+    # Reduce HSI (selected bands will be used from now)
+    cube_sel = cube_norm[:, :, selected_bands]
 
     # Patches
     # X, y = extract_patches(cube_sel, gt, patch_size)
     X, y = extract_patches(
-        cube_norm, gt,
+        cube_sel, gt,
         win=patch_size,
         drop_label0=True,
         max_samples_per_class=max_samples

@@ -5,6 +5,9 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, f1_score
 from scipy.stats import pearsonr
 
+import tensorflow as tf
+from tensorflow.keras import layers, models
+
 def srpa_scores(
     X: np.ndarray,
     y: np.ndarray,
@@ -126,3 +129,113 @@ def run_srpa_pipeline(
         print(f"[SRPA] Accuracy={acc:.4f}  F1={f1:.4f}")
 
     return [int(b) for b in selected], acc, f1
+
+
+################ 3dcnn spra mechanism ##########################
+
+def build_srpa_3dcnn(num_bands, num_classes=3, lr=1e-3):
+    """
+    Input shape: (25, 25, num_bands, 1)
+    Output: (class_logits, attention_weights)
+    """
+    inp = layers.Input(shape=(25, 25, num_bands, 1))
+
+    # Conv1 + MaxPool
+    x = layers.Conv3D(8, (3,3,3), padding="same", activation="relu")(inp)
+    x = layers.MaxPool3D(pool_size=(2,2,1))(x)
+
+    # Conv2
+    x = layers.Conv3D(16, (3,3,3), padding="same", activation="relu")(x)
+
+    # ---- Global pooling (keep spectral axis) ----
+    gp = layers.GlobalAveragePooling3D(keepdims=False)(x)  # (batch, 16)
+    gp = layers.Reshape((num_bands, 16))(gp)               # (batch, B, 16)
+
+    # ---- Per-band feature → mean across channel-dim ----
+    band_feat = tf.reduce_mean(gp, axis=-1)                # (batch, B)
+
+    # ----------------- SE BLOCK --------------------
+    r = max(1, num_bands // 4)
+    se = layers.Dense(r, activation="relu")(band_feat)
+    se = layers.Dense(num_bands, activation="sigmoid")(se)  # (batch, B)
+
+    # ---------------- Classification ----------------
+    flat = layers.Flatten()(gp)
+    out = layers.Dense(num_classes, activation="softmax")(flat)
+
+    model = models.Model(inp, [out, se])
+
+    model.compile(
+        optimizer=tf.keras.optimizers.Adam(learning_rate=lr),
+        loss=["categorical_crossentropy", None],
+        metrics=["accuracy"]
+    )
+
+    return model
+
+
+def srpa_selection_3dcnn(
+    cube, gt,
+    patch_size=25,
+    num_bands=20,
+    # epochs=25,
+    batch_size=32,
+    lambda_penalty=0.3,
+):
+    """
+    cube: (H, W, B)
+    gt:   (H, W)
+    """
+    H, W, B = cube.shape
+
+    # -------------------- Extract Patches --------------------
+    patches = []
+    labels = []
+
+    pad = patch_size // 2
+
+    padded = np.pad(cube, ((pad,pad),(pad,pad),(0,0)), mode="reflect")
+    gt_pad = np.pad(gt, ((pad,pad),(pad,pad)), mode="reflect")
+
+    for i in range(H):
+        for j in range(W):
+            if gt[i,j] == 0:  # ignore unlabeled
+                continue
+            patch = padded[i:i+patch_size, j:j+patch_size, :]
+            patches.append(patch)
+            labels.append(gt[i,j])
+
+    patches = np.array(patches)                      # (N, 25,25,B)
+    labels = np.array(labels)
+
+    # One-hot labels
+    num_classes = labels.max()
+    y_oh = tf.keras.utils.to_categorical(labels-1, num_classes=num_classes)
+
+    X = patches[..., np.newaxis]                     # (N,25,25,B,1)
+
+    # -------------------- Build Model --------------------
+    model = build_srpa_3dcnn(num_bands=B, num_classes=num_classes)
+
+    # -------------------- Train -------------------------
+    model.fit(
+        X, [y_oh, np.zeros((len(X), B))],  # second output ignored
+        epochs=2,
+        batch_size=batch_size,
+        verbose=1
+    )
+
+    # -------------------- Collect Attention ----------------
+    _, attn = model.predict(X, batch_size=batch_size, verbose=0)
+    attn_mean = attn.mean(axis=0)        # (B,)
+
+    # -------------------- Compute Redundancy ---------------
+    X_flat = cube.reshape(-1, B)
+    corr = np.corrcoef(X_flat, rowvar=False)
+    redundancy = (np.abs(corr).sum(axis=1) - 1) / (B - 1)
+
+    # -------------------- Final SRPA score -----------------
+    srpa_score = attn_mean - lambda_penalty * redundancy
+    topk = np.argsort(srpa_score)[::-1][:num_bands]
+
+    return topk.tolist(), srpa_score
