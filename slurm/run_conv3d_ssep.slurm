@@ -1,15 +1,15 @@
 #!/bin/bash
 #SBATCH --job-name=conv3d_ssep
-#SBATCH --account=priority-shamsunnaharedib
+#SBATCH --account=priority-binhaizhu
 #SBATCH --partition=gpupriority
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=16
 #SBATCH --gres=gpu:1
 #SBATCH --mem=128G
-#SBATCH --time=05:00:00
+#SBATCH --time=06:00:00
 
-#SBATCH --array=0-14
+#SBATCH --array=7
 #SBATCH --output=slurm_logs/%x-%A_%a.out
 #SBATCH --error=slurm_logs/%x-%A_%a.err
 

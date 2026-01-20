@@ -1,13 +1,13 @@
 #!/bin/bash
 #SBATCH --job-name=analyze_baseline
-#SBATCH --account=priority-binhaizhu
+#SBATCH --account=priority-johnsheppard
 #SBATCH --partition=gpupriority
 #SBATCH --gres=gpu:0
 #SBATCH --cpus-per-task=8
 #SBATCH --mem=16G
 #SBATCH --time=00:30:00
-#SBATCH --output=slurm_logs/%x-%j.out
-#SBATCH --error=slurm_logs/%x-%j.err
+#SBATCH --output=slurm_logs/%x-%j-new.out
+#SBATCH --error=slurm_logs/%x-%j-new.err
 
 echo "=== Plotting Baseline Histories ==="
 echo "Dataset: $1"

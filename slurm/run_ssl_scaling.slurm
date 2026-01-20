@@ -29,7 +29,8 @@ mkdir -p slurm_logs
 python3 experiments/ssl/run_ssl_scale_experiment.py \
     --dataset "$DATASET" \
     --max_samples 2000 \
-    --batch_size 128 \
-    --learning_rate 5e-4
+    --batch_size 4 \
+    --learning_rate 1e-4 \
+    --n_splits 5
 
 echo "===== SSL Scaling Experiment Completed ====="

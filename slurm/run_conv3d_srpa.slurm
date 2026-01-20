@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=h3dnet_lite_srpa
+#SBATCH --job-name=conv3d_srpa
 #SBATCH --account=priority-binhaizhu
 #SBATCH --partition=gpupriority
 #SBATCH --nodes=1
@@ -7,13 +7,13 @@
 #SBATCH --cpus-per-task=16
 #SBATCH --gres=gpu:1
 #SBATCH --mem=128G
-#SBATCH --time=05:00:00
+#SBATCH --time=06:00:00
 
-#SBATCH --array=0-14
+#SBATCH --array=1-7
 #SBATCH --output=slurm_logs/%x-%A_%a.out
 #SBATCH --error=slurm_logs/%x-%A_%a.err
 
-echo "===== Hyper3DNet-Lite SRPA CV Started ====="
+echo "===== Conv3d SRPA CV Started ====="
 
 DATASETS=("indian_pines" "salinas" "pavia_university" "pavia_centre" "ksc")
 NUM_BANDS=(5 20 50)
@@ -42,7 +42,7 @@ mkdir -p slurm_logs
 python3 experiments/conv3d_full/run_3dcnn_srpa.py \
     --dataset "$DATASET" \
     --patch 25 \
-    --splits 10 \
+    --splits 5 \
     --epochs 50 \
     --max_samples 2000 \
     --batch_size 4 \
