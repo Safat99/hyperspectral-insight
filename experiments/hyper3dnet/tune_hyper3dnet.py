@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 
 from hyperspectral_insight.data.loaders import load_dataset
-from hyperspectral_insight.data.patches import create_patches
+from hyperspectral_insight.data.patches import extract_patches
 from hyperspectral_insight.data.normalization import minmax_normalize
 
 from hyperspectral_insight.models.hyper3dnet import build_hyper3dnet
@@ -24,7 +24,8 @@ def tune_hyper3dnet(
     Lightweight hyperparameter tuning for Hyper3DNet.
 
     Grid:
-        patch_size ∈ {11, 25}
+        patch_size ∈ {5, 25, 50}
+        stride ∈ {1, 25}
         batch_size ∈ {8, 16}
         lr ∈ {1e-3, 5e-4, 1e-4}
     """
@@ -36,25 +37,46 @@ def tune_hyper3dnet(
     cube_norm = minmax_normalize(cube)
 
     # Hyperparameter grid
-    patch_sizes = [25]
+    # patch_sizes = [25]
+    patch_stride_pairs = [
+        (5, 1),
+        (25, 1),
+        (50, 1),
+        (50, 25),
+    ]
     batch_sizes = [4, 8, 16, 64]
     lrs = [1e-3, 5e-4, 1e-4]
 
-    configs = list(itertools.product(patch_sizes, batch_sizes, lrs))
+    configs = list(itertools.product(patch_stride_pairs, batch_sizes, lrs))
 
     rows = []
 
-    for patch_size, batch_size, lr in configs:
+    for (patch_size, stride), batch_size, lr in configs:
         print("\n----------------------------------------")
-        print(f"Config: patch={patch_size}, batch={batch_size}, lr={lr}")
+        print(f"Config: patch={patch_size}, stride={stride}, batch={batch_size}, lr={lr}")
 
+        if patch_size == 50 and stride == 1 and batch_size > 8:
+            print("  Skipping due to expected memory issues")
+            continue
+        
+        
         # Extract patches for this patch size
-        X, y = create_patches(cube_norm, gt, patch_size)
+        X, y = extract_patches(cube_norm,
+                               gt, 
+                               win=patch_size,
+                               stride=stride,
+                               drop_label0=True,
+                               max_samples_per_class=None
+                               )
         print(f"  X: {X.shape}, y: {y.shape}, classes={int(y.max())+1}")
 
         def model_fn(input_shape, n_classes):
             # If your build_hyper3dnet doesn't take lr, remove lr=lr
             return build_hyper3dnet(input_shape, n_classes, lr=lr)
+        
+        cv_max_samples = 2000
+        if patch_size == 50 and stride > 1:
+            cv_max_samples = None
 
         results = kfold_cross_validation(
             model_fn=model_fn,
@@ -66,13 +88,14 @@ def tune_hyper3dnet(
             shuffle=True,
             random_state=0,
             verbose=1,
-            max_samples_per_class=2000
+            max_samples_per_class=cv_max_samples
         )
 
         mean_oa = results["mean_metrics"]["oa"]
         row = {
             "dataset": dataset_name,
             "patch_size": patch_size,
+            "stride": stride,
             "batch_size": batch_size,
             "lr": lr,
             "epochs": epochs,

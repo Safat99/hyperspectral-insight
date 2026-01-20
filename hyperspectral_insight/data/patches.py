@@ -49,6 +49,7 @@ def extract_patches(
     cube: np.ndarray,
     gt: np.ndarray,
     win: int = 25,
+    stride: int = 1,
     drop_label0: bool = True,
     max_samples_per_class: int = None
 ) -> Tuple[np.ndarray, np.ndarray]:
@@ -64,6 +65,12 @@ def extract_patches(
         ys, xs = np.where(np.ones_like(gt, dtype=bool))
 
     coords = np.stack([ys, xs], axis=1)
+    
+    if stride > 1:
+        coords = coords[
+            (coords[:, 0] % stride == 0) &
+            (coords[:, 1] % stride == 0)
+        ]
 
     # ----- NEW: class-wise sampling -----
     if max_samples_per_class is not None:
