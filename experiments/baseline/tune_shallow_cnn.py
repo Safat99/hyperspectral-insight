@@ -39,7 +39,8 @@ def run_tuning(dataset_name, patch_size=25):
                 n_splits=3,         # faster tuning
                 epochs=50,          # fewer epochs
                 batch_size=bs,
-                verbose=0
+                verbose=0,
+                max_samples_per_class=2000
             )
 
             row = {

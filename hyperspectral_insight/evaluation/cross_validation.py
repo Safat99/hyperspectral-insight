@@ -74,6 +74,7 @@ def kfold_cross_validation(
     shuffle=True,
     random_state=0,
     verbose=0,
+    max_samples_per_class=None,
 ):
     """
     Perform K-fold cross-validation on a patch dataset.
@@ -109,6 +110,12 @@ def kfold_cross_validation(
 
         X_train, y_train = X[train_idx], y[train_idx]
         X_val, y_val = X[val_idx], y[val_idx]
+        
+        X_train, y_train = cap_samples_per_class(
+            X_train,
+            y_train,
+            max_samples_per_class
+            )
 
         _, history_dict, metrics = train_one_fold(
             model_fn,
@@ -138,3 +145,25 @@ def kfold_cross_validation(
         "std_metrics": std_metrics,
         "histories" : histories,
     }
+
+
+def cap_samples_per_class(X, y, max_samples_per_class):
+        if max_samples_per_class is None:
+            return X, y
+
+        X_new, y_new = [], []
+
+        for cls in np.unique(y):
+            idx = np.where(y == cls)[0]
+
+            if len(idx) > max_samples_per_class:
+                idx = np.random.choice(
+                    idx,
+                    max_samples_per_class,
+                    replace=False
+                )
+
+            X_new.append(X[idx])
+            y_new.append(y[idx])
+
+        return np.concatenate(X_new), np.concatenate(y_new)

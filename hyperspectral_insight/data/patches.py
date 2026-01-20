@@ -107,6 +107,13 @@ def create_patches(cube: np.ndarray, gt: np.ndarray, patch_size: int = 5, max_sa
     If max_samples_per_class is set, randomly samples that many
     patches per class, preventing memory explosion (needed for Pavia Centre).
     """
+    
+    if max_samples_per_class is not None:
+        raise ValueError(
+            "create_patches(): max_samples_per_class is deprecated. "
+            "Sampling must be performed inside cross-validation."
+        )
+    
     pad = patch_size // 2
     padded = np.pad(cube, ((pad,pad),(pad,pad),(0,0)), mode="reflect")
 
@@ -118,9 +125,9 @@ def create_patches(cube: np.ndarray, gt: np.ndarray, patch_size: int = 5, max_sa
     
         coords = np.argwhere(gt == cls)
         
-        if max_samples_per_class is not None and len(coords) > max_samples_per_class:
-            idx = np.random.choice(len(coords), max_samples_per_class, replace=False)
-            coords = coords[idx]
+        # if max_samples_per_class is not None and len(coords) > max_samples_per_class:
+        #     idx = np.random.choice(len(coords), max_samples_per_class, replace=False)
+        #     coords = coords[idx]
         
         for r, c in coords:
             patch = padded[r:r+patch_size, c:c+patch_size, :]
