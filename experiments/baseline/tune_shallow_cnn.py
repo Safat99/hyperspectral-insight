@@ -53,7 +53,7 @@ def run_tuning(dataset_name, patch_size=25):
             }
             results.append(row)
 
-    out_dir = "results/baseline/"
+    out_dir = "results/baseline/new/"
     os.makedirs(out_dir, exist_ok=True)
     out_path = os.path.join(out_dir, f"{dataset_name}_tuning_results.json")
 

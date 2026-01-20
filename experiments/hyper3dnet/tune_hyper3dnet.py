@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 
 from hyperspectral_insight.data.loaders import load_dataset
-from hyperspectral_insight.data.patches import extract_patches
+from hyperspectral_insight.data.patches import create_patches
 from hyperspectral_insight.data.normalization import minmax_normalize
 
 from hyperspectral_insight.models.hyper3dnet import build_hyper3dnet
@@ -16,7 +16,7 @@ from hyperspectral_insight.evaluation.cross_validation import kfold_cross_valida
 
 def tune_hyper3dnet(
     dataset_name: str = "indian_pines",
-    save_dir: str = "results/hyper3dnet/",
+    save_dir: str = "results/hyper3dnet/new/",
     n_splits: int = 3,
     epochs: int = 20,
 ):
@@ -37,7 +37,7 @@ def tune_hyper3dnet(
 
     # Hyperparameter grid
     patch_sizes = [25]
-    batch_sizes = [4, 8, 16]
+    batch_sizes = [4, 8, 16, 64]
     lrs = [1e-3, 5e-4, 1e-4]
 
     configs = list(itertools.product(patch_sizes, batch_sizes, lrs))
@@ -49,8 +49,8 @@ def tune_hyper3dnet(
         print(f"Config: patch={patch_size}, batch={batch_size}, lr={lr}")
 
         # Extract patches for this patch size
-        X, y = extract_patches(cube_norm, gt, patch_size)
-        print(f"  X: {X.shape}, y: {y.shape}")
+        X, y = create_patches(cube_norm, gt, patch_size)
+        print(f"  X: {X.shape}, y: {y.shape}, classes={int(y.max())+1}")
 
         def model_fn(input_shape, n_classes):
             # If your build_hyper3dnet doesn't take lr, remove lr=lr
@@ -66,6 +66,7 @@ def tune_hyper3dnet(
             shuffle=True,
             random_state=0,
             verbose=1,
+            max_samples_per_class=2000
         )
 
         mean_oa = results["mean_metrics"]["oa"]
