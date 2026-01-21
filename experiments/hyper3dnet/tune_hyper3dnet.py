@@ -44,7 +44,7 @@ def tune_hyper3dnet(
         (50, 1),
         (50, 25),
     ]
-    batch_sizes = [4, 8, 16, 64]
+    batch_sizes = [4, 8, 16]
     lrs = [1e-3, 5e-4, 1e-4]
 
     configs = list(itertools.product(patch_stride_pairs, batch_sizes, lrs))
