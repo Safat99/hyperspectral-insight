@@ -14,7 +14,7 @@ from hyperspectral_insight.evaluation.cross_validation import kfold_cross_valida
 
 def tune_lite(
     dataset_name: str = "indian_pines",
-    save_dir: str = "results/hyper3dnetlite/",
+    save_dir: str = "results/hyper3dnetlite/new/",
     n_splits: int = 3,
     epochs: int = 10,
 ):
@@ -22,7 +22,7 @@ def tune_lite(
     Lightweight hyperparameter tuning for Hyper3DNet.
 
     Grid:
-        patch_size ∈ {11, 25}
+        patch_size ∈  {5, 25, 50}
         batch_size ∈ {8, 16}
         lr ∈ {1e-3, 5e-4, 1e-4}
     """
@@ -34,26 +34,44 @@ def tune_lite(
     cube_norm = minmax_normalize(cube)
 
     # Hyperparameter grid
-    patch_sizes = [25]
+    # patch_sizes = [25]
+    patch_stride_pairs = [
+        (5, 1),
+        (25, 1),
+        (50, 1),
+        (50, 25),
+    ]
     batch_sizes = [4, 64, 128, 256]
     lrs = [1e-3, 5e-4, 1e-4]
 
-    configs = list(itertools.product(patch_sizes, batch_sizes, lrs))
+    configs = list(itertools.product(patch_stride_pairs, batch_sizes, lrs))
 
     rows = []
 
-    for patch_size, batch_size, lr in configs:
+    for (patch_size,stride), batch_size, lr in configs:
         print("\n----------------------------------------")
         print(f"Config: patch={patch_size}, batch={batch_size}, lr={lr}")
 
         # Extract patches for this patch size
-        X, y = extract_patches(cube_norm, gt, patch_size)
+        X, y = extract_patches(cube_norm,
+                               gt,
+                               win=patch_size,
+                               stride=stride,
+                               drop_label0=True,
+                               max_samples_per_class=None)
         print(f"  X: {X.shape}, y: {y.shape}")
 
         def model_fn(input_shape, n_classes):
             # If your build_hyper3dnet doesn't take lr, remove lr=lr
             return build_hyper3dnet(input_shape, n_classes, lr=lr)
 
+        cv_max_samples = 2000
+        
+        ## if gets OOM then need to uncomment it
+        # if patch_size == 50 and batch_size > 16:
+        #     print("  Reducing batch size to avoid OOM")
+        #     batch_size = 16
+        
         results = kfold_cross_validation(
             model_fn=model_fn,
             X=X,
@@ -63,7 +81,8 @@ def tune_lite(
             batch_size=batch_size,
             shuffle=True,
             random_state=0,
-            verbose=0,
+            verbose=1,
+            max_samples_per_class=cv_max_samples
         )
 
         mean_oa = results["mean_metrics"]["oa"]
