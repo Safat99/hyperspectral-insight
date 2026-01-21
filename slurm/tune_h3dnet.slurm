@@ -1,15 +1,15 @@
 #!/bin/bash
 #SBATCH --job-name=tune_h3dnet
-#SBATCH --account=priority-binhaizhu
+#SBATCH --account=priority-johnsheppard
 #SBATCH --partition=gpupriority
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=12
+#SBATCH --cpus-per-task=6
 #SBATCH --gpus-per-task=1
-#SBATCH --mem=64G
-#SBATCH --time=04:00:00
-#SBATCH --output=slurm_logs/%x-%j.out
-#SBATCH --error=slurm_logs/%x-%j.err
+#SBATCH --mem=128G
+#SBATCH --time=12:00:00
+#SBATCH --output=slurm_logs/new/%x-%j.out
+#SBATCH --error=slurm_logs/new/%x-%j.err
 
 echo "===== Hyper3DNet Tuning Job Started ====="
 echo "Job ID: $SLURM_JOB_ID"
@@ -38,7 +38,7 @@ mkdir -p slurm_logs
 echo "Running Hyper3DNet tuning..."
 
 python3 experiments/hyper3dnet/tune_hyper3dnet.py \
-    --dataset indian_pines \
+    --dataset pavia_centre \
     --splits 3 \
     --epochs 20
 

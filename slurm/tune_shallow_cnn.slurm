@@ -4,10 +4,10 @@
 #SBATCH --partition=gpupriority
 #SBATCH --gres=gpu:1
 #SBATCH --cpus-per-task=4
-#SBATCH --mem=32G
-#SBATCH --time=04:00:00
-#SBATCH --output=slurm_logs/%x-%j.out
-#SBATCH --error=slurm_logs/%x-%j.err
+#SBATCH --mem=128G
+#SBATCH --time=06:00:00
+#SBATCH --output=slurm_logs/new/%x-%j.out
+#SBATCH --error=slurm_logs/new/%x-%j.err
 
 echo "=== Starting Shallow CNN Tuning ==="
 
@@ -21,6 +21,6 @@ conda activate hsi_tf
 
 export PYTHONPATH="$SLURM_SUBMIT_DIR"
 
-python3 experiments/baseline/tune_shallow_cnn.py --dataset indian_pines
+python3 experiments/baseline/tune_shallow_cnn.py --dataset pavia_centre
 
 echo "=== Tuning Completed ==="
