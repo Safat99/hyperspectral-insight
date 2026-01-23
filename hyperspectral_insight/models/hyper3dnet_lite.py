@@ -2,10 +2,16 @@ import tensorflow as tf
 from tensorflow.keras import layers, models
 
 
-def build_hyper3dnet_lite(input_shape, n_classes, lr=1e-4):
+def build_hyper3dnet_lite(
+    input_shape, 
+    n_classes,
+    optimizer_name: str = "adam", 
+    lr: float = 1e-3,):
     """
     Lightweight Hyper3DNet-Lite architecture.
     input_shape: (win, win, bands, 1)
+    optimizer_name: "adam" or "adadelta"
+    lr: learning rate (used only for Adam)
     """
     inp = layers.Input(shape=input_shape)
 
@@ -30,9 +36,19 @@ def build_hyper3dnet_lite(input_shape, n_classes, lr=1e-4):
     out = layers.Dense(n_classes, activation="softmax")(x)
 
     model = models.Model(inp, out)
+    
+    # ----------- Optimizer selection ------------------
+    if optimizer_name.lower() == "adadelta":
+        optimizer = tf.keras.optimizers.Adadelta()
+    elif optimizer_name.lower() == "adam":
+        optimizer = tf.keras.optimizers.Adam(learning_rate=lr)
+    else:
+        raise ValueError(f"Unknown optimizer: {optimizer_name}")
+    
     model.compile(
-        optimizer=tf.keras.optimizers.Adam(learning_rate=lr),
+        optimizer=optimizer,
         loss="categorical_crossentropy",
         metrics=["accuracy"],
     )
+    
     return model
