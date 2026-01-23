@@ -8,14 +8,19 @@
 #SBATCH --gpus-per-task=1
 #SBATCH --mem=64G
 #SBATCH --time=06:00:00
-#SBATCH --output=slurm_logs/%x-%j.out
-#SBATCH --error=slurm_logs/%x-%j.err
+
+#SBATCH --array=0-11
+#SBATCH --output=slurm_logs/%x-%A_%a.out
+#SBATCH --error=slurm_logs/%x-%A_%a.err
 
 echo "===== Hyper3DNet Tuning Job Started ====="
 echo "Dataset: $1"
 echo "Job ID: $SLURM_JOB_ID"
 echo "Running on: $(hostname)"
 echo "Working Dir: $SLURM_SUBMIT_DIR"
+
+DATASET=$1
+PHASE=$2   # 1 or 2
 
 module load CUDA/12.2.0
 module load Anaconda3/2024.02-1
@@ -33,11 +38,20 @@ echo "CUDA visible devices: $CUDA_VISIBLE_DEVICES"
 
 mkdir -p slurm_logs
 
+
 echo "Running Hyper3DNetLite tuning..."
 
-python3 experiments/hyper3dnetlite/tune_lite.py \
-    --dataset "$1" \
-    --splits 3 \
-    --epochs 20
+echo "Dataset: $DATASET"
+echo "Config ID: $SLURM_ARRAY_TASK_ID"
+echo "Phase: $PHASE"
+
+
+
+python experiments/hyper3dnetlite/tune_lite.py \
+    --dataset "$DATASET" \
+    --config_id "$SLURM_ARRAY_TASK_ID" \
+    --phase "$PHASE" \
+    --splits 5 \
+    --epochs 10
 
 echo "===== Hyper3DNet Tuning Completed ====="

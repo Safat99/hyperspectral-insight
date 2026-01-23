@@ -39,7 +39,7 @@ def train_one_fold(
     # One-hot encode labels
     enc = OneHotEncoder(sparse_output=False)
     y_train_oh = enc.fit_transform(y_train.reshape(-1, 1))
-    y_val_oh = enc.fit_transform(y_val.reshape(-1, 1))
+    y_val_oh = enc.transform(y_val.reshape(-1, 1))
 
     # Build model
     model = model_fn(input_shape=X_train.shape[1:], n_classes=n_classes)
