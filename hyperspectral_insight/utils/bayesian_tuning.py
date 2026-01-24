@@ -1,0 +1,69 @@
+import optuna
+from hyperspectral_insight.data.patches import extract_patches
+from hyperspectral_insight.evaluation.cross_validation import kfold_cross_validation
+
+
+def make_objective(
+    *,
+    cube,
+    gt,
+    model_builder,
+    optimizer_space,
+    batch_space,
+    patch_stride_space,
+    tuning_cv=3,
+    tuning_epochs=10,
+    max_samples=300,
+    safety_fn=None,
+):
+    """
+    Returns an Optuna objective function.
+    Architecture is injected via model_builder.
+    """
+
+    def objective(trial):
+
+        # ----- Search space -----
+        optimizer = trial.suggest_categorical("optimizer", optimizer_space)
+        batch_size = trial.suggest_categorical("batch_size", batch_space)
+        patch_size, stride = trial.suggest_categorical(
+            "patch_stride", patch_stride_space
+        )
+
+        # ----- Safety / pruning -----
+        if safety_fn is not None:
+            if not safety_fn(patch_size, stride, batch_size, optimizer):
+                raise optuna.TrialPruned("Unsafe configuration")
+
+        
+        X, y = extract_patches(
+            cube,
+            gt,
+            win=patch_size,
+            stride=stride,
+            max_samples_per_class=max_samples
+        )
+
+        # ----- Model factory -----
+        def model_fn(input_shape, n_classes):
+            return model_builder(
+                input_shape,
+                n_classes,
+                optimizer=optimizer
+            )
+
+        # ----- CV evaluation -----
+        results = kfold_cross_validation(
+            model_fn=model_fn,
+            X=X,
+            y=y,
+            n_splits=tuning_cv,
+            epochs=tuning_epochs,
+            batch_size=batch_size,
+            max_samples_per_class=max_samples,
+            verbose=0,
+        )
+
+        return results["mean_metrics"]["f1"]
+
+    return objective

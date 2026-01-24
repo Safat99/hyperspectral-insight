@@ -72,21 +72,22 @@ def extract_patches(
             (coords[:, 1] % stride == 0)
         ]
 
-    # ----- NEW: class-wise sampling -----
+    # ----- NEW: class-wise sampling ----
+    # works for stride>1
     if max_samples_per_class is not None:
         new_coords = []
-        for cls in np.unique(gt):
+        labels_at_coords = gt[coords[:, 0], coords[:, 1]]
+
+        rng = np.random.default_rng(0)
+
+        for cls in np.unique(labels_at_coords):
             if cls == 0 and drop_label0:
                 continue
-            cls_mask = (gt[ys, xs] == cls)
-            cls_coords = coords[cls_mask]
+
+            cls_coords = coords[labels_at_coords == cls]
 
             if len(cls_coords) > max_samples_per_class:
-                idx = np.random.choice(
-                    len(cls_coords),
-                    max_samples_per_class,
-                    replace=False
-                )
+                idx = rng.choice(len(cls_coords), max_samples_per_class, replace=False)
                 cls_coords = cls_coords[idx]
 
             new_coords.append(cls_coords)

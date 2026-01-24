@@ -114,7 +114,8 @@ def kfold_cross_validation(
         X_train, y_train = cap_samples_per_class(
             X_train,
             y_train,
-            max_samples_per_class
+            max_samples_per_class,
+            seed=fold_idx
             )
 
         _, history_dict, metrics = train_one_fold(
@@ -147,21 +148,17 @@ def kfold_cross_validation(
     }
 
 
-def cap_samples_per_class(X, y, max_samples_per_class):
+def cap_samples_per_class(X, y, max_samples_per_class, seed):
         if max_samples_per_class is None:
             return X, y
 
+        rng = np.random.default_rng(seed)
         X_new, y_new = [], []
 
         for cls in np.unique(y):
             idx = np.where(y == cls)[0]
-
             if len(idx) > max_samples_per_class:
-                idx = np.random.choice(
-                    idx,
-                    max_samples_per_class,
-                    replace=False
-                )
+                idx = rng.choice(idx, max_samples_per_class, replace=False)
 
             X_new.append(X[idx])
             y_new.append(y[idx])

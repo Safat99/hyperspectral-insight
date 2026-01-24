@@ -10,3 +10,4 @@ joblib
 h5py
 python-dotenv
 protobuf
+optuna
