@@ -6,7 +6,8 @@ def build_hyper3dnet_lite(
     input_shape, 
     n_classes,
     optimizer_name: str = "adam", 
-    lr: float = 1e-3,):
+    lr: float = 1e-3
+    ):
     """
     Lightweight Hyper3DNet-Lite architecture.
     input_shape: (win, win, bands, 1)

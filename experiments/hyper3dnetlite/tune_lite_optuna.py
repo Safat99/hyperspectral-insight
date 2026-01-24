@@ -15,7 +15,7 @@ def tune_lite_optuna(
     out_dir: str = "results/hyper3dnetlite/optuna",
     tuning_cv: int = 5,
     tuning_epochs: int = 10,
-    max_samples: int = 300,
+    max_samples: int = 1000,
 ):
     """
     Bayesian hyperparameter tuning for Hyper3DNet-Lite
@@ -59,7 +59,7 @@ def tune_lite_optuna(
 
     # ---------- Build Optuna objective ----------
     objective = make_objective(
-        cube=cube,
+        cube=cube_norm,
         gt=gt,
         model_builder=model_builder,
         optimizer_space=["adam", "adadelta"],

@@ -9,8 +9,8 @@
 #SBATCH --mem=64G
 #SBATCH --time=08:00:00
 
-#SBATCH --output=slurm_logs/%x-%A_%a.out
-#SBATCH --error=slurm_logs/%x-%A_%a.err
+#SBATCH --output=slurm_logs/bayesian_opt/%x-%A_%a.out
+#SBATCH --error=slurm_logs/bayesian_opt/%x-%A_%a.err
 #SBATCH --array=0-4
 
 DATASETS=("indian_pines" "salinas" "pavia_centre" "pavia_university" "ksc")
