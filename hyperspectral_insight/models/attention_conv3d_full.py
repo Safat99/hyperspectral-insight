@@ -1,7 +1,11 @@
 import tensorflow as tf
 from tensorflow.keras import layers, models
 
-def build_full3dcnn(input_shape, n_classes, lr=1e-4):
+def build_full3dcnn(input_shape,
+                    n_classes,
+                    optimizer_name: str = "adam", 
+                    lr=1e-3
+                    ):
     """
     attention based band seletion paper's cnn network
 
@@ -25,10 +29,18 @@ def build_full3dcnn(input_shape, n_classes, lr=1e-4):
     
     model = models.Model(inp, out)
     
+    # ----------- Optimizer selection ------------------
+    if optimizer_name.lower() == "adadelta":
+        optimizer = tf.keras.optimizers.Adadelta()
+    elif optimizer_name.lower() == "adam":
+        optimizer = tf.keras.optimizers.Adam(learning_rate=lr)
+    else:
+        raise ValueError(f"Unknown optimizer: {optimizer_name}")
+    
     model.compile(
-        optimizer=tf.keras.optimizers.Adam(learning_rate=lr),
-        loss="categorical_crossentropy", # important for one-hot labels
-        metrics=["accuracy"]
+        optimizer=optimizer,
+        loss="categorical_crossentropy",
+        metrics=["accuracy"],
     )
     
     return model
