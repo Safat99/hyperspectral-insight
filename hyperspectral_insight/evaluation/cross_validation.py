@@ -11,6 +11,7 @@ def train_one_fold(
     y_train,
     X_val,
     y_val,
+    n_classes,
     epochs=30,
     batch_size=16,
     verbose=0,
@@ -34,10 +35,18 @@ def train_one_fold(
         metrics: dictionary containing OA, Precision, Recall, F1, Kappa
     """
 
-    n_classes = int(y_train.max() + 1)
+    # n_classes = int(y_train.max() + 1)
     
     # One-hot encode labels
-    enc = OneHotEncoder(sparse_output=False)
+    enc = OneHotEncoder(
+        categories=[np.arange(n_classes)],
+        sparse_output=False,
+        handle_unknown="ignore"
+    )
+    
+    # Fit once on full class space
+    enc.fit(np.arange(n_classes).reshape(-1, 1))
+    
     y_train_oh = enc.fit_transform(y_train.reshape(-1, 1))
     y_val_oh = enc.transform(y_val.reshape(-1, 1))
 
@@ -96,6 +105,8 @@ def kfold_cross_validation(
             - training history
     """
 
+    n_classes = int(np.max(y) + 1)
+    
     kf = StratifiedKFold(
         n_splits=n_splits,
         shuffle=shuffle,
@@ -124,6 +135,7 @@ def kfold_cross_validation(
             y_train,
             X_val,
             y_val,
+            n_classes=n_classes,
             epochs=epochs,
             batch_size=batch_size,
             verbose=verbose,
