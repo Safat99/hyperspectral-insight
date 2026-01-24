@@ -1,7 +1,7 @@
 import optuna
 from hyperspectral_insight.data.patches import extract_patches
 from hyperspectral_insight.evaluation.cross_validation import kfold_cross_validation
-
+from collections import Counter
 
 def make_objective(
     *,
@@ -11,9 +11,9 @@ def make_objective(
     optimizer_space,
     batch_space,
     patch_stride_space,
-    tuning_cv=3,
+    tuning_cv=5,
     tuning_epochs=10,
-    max_samples=300,
+    max_samples=1000,
     safety_fn=None,
 ):
     """
@@ -52,16 +52,24 @@ def make_objective(
                 optimizer=optimizer
             )
 
+        class_counts = Counter(y)
+        min_class = min(class_counts.values())
+        effective_splits = min(tuning_cv, min_class)
+
+        if effective_splits < 2:
+            raise optuna.TrialPruned("Too few samples for CV")
+        
+        
         # ----- CV evaluation -----
         results = kfold_cross_validation(
             model_fn=model_fn,
             X=X,
             y=y,
-            n_splits=tuning_cv,
+            n_splits=effective_splits,
             epochs=tuning_epochs,
             batch_size=batch_size,
             max_samples_per_class=max_samples,
-            verbose=0,
+            verbose=1,
         )
 
         return results["mean_metrics"]["f1"]
