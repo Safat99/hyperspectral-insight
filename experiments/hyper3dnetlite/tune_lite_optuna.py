@@ -70,7 +70,7 @@ def tune_lite_optuna(
 
     # ---------- Storage (shared across array jobs)------------------
     storage_path = os.path.join(out_dir, f"optuna_{dataset_name}.db")
-    storage_url = f"sqlite:///{storage_path}"
+    storage_url = f"sqlite:///{storage_path}?timeout=60"
     study_name = f"h3dnetlite_{dataset_name}"
 
     seed = int(os.environ.get("SLURM_ARRAY_TASK_ID", 0))
@@ -81,15 +81,27 @@ def tune_lite_optuna(
         multivariate=True,
     )
 
-    study = optuna.create_study(
-        direction="maximize",
-        study_name=study_name,
-        storage=storage_url,
-        load_if_exists=True,
-        sampler=sampler,
-        pruner=optuna.pruners.NopPruner(),
-        # consider_pruned_trials=False,
-    )
+    task_id = int(os.environ.get("SLURM_ARRAY_TASK_ID", 0))
+
+    if task_id == 0:
+        # Only ONE process creates the study / tables
+        study = optuna.create_study(
+            direction="maximize",
+            study_name=study_name,
+            storage=storage_url,
+            load_if_exists=True,
+            sampler=sampler,
+            pruner=optuna.pruners.NopPruner(),
+        )
+    else:
+        # All other processes WAIT briefly, then load
+        import time
+        time.sleep(5)   # give rank-0 time to create tables
+
+        study = optuna.load_study(
+            study_name=study_name,
+            storage=storage_url,
+        )
 
     # ---------- Logging ----------
     task_id = os.environ.get("SLURM_ARRAY_TASK_ID", "local")
