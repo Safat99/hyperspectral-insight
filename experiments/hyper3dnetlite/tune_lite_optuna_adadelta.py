@@ -50,7 +50,7 @@ def tune_lite_optuna_adadelta(
     PATCH_STRIDE_MAP = {
         "p5_s1": (5, 1),
         "p25_s1": (25, 1),
-        "p50_s25": (50, 25),
+        "p50_s1": (50, 1),
     }
 
     batch_space = [16, 64, 128]
@@ -121,28 +121,35 @@ def tune_lite_optuna_adadelta(
             ])
 
     # ---------- Run ----------
-    study.optimize(
-        objective,
-        n_trials=trials_per_job,
-        n_jobs=1,
-        gc_after_trial=True,
-        show_progress_bar=False,
-        callbacks=[on_trial_complete],
-    )
+    # ---------- Run ----------
+    max_attempts = 5
+    attempt = 0
 
-    completed_trials = [
-        t for t in study.trials
-        if t.state == optuna.trial.TrialState.COMPLETE
-    ]
+    while attempt < max_attempts: 
+        study.optimize(
+            objective,
+            n_trials=trials_per_job,
+            n_jobs=1,
+            gc_after_trial=True,
+            show_progress_bar=False,
+            callbacks=[on_trial_complete],
+        )
 
-    if completed_trials:
-        best_trial = study.best_trial
-        best_f1 = best_trial.value
-        best_params = best_trial.params
-    else:
-        best_f1 = None
-        best_params = None
-        print(" No completed trials yet (all trials pruned).")
+        completed_trials = [
+            t for t in study.trials
+            if t.state == optuna.trial.TrialState.COMPLETE
+        ]
+
+        if completed_trials:
+            best_trial = study.best_trial
+            best_f1 = best_trial.value
+            best_params = best_trial.params
+            break
+        else:
+            best_f1 = None
+            best_params = None
+            print(" No completed trials yet (all trials pruned).")
+            attempt +=1
 
     result = {
         "dataset": dataset_name,
