@@ -169,7 +169,12 @@ def tune_lite_optuna_adadelta(
 
     print("\n=== DONE (Adadelta) ===")
     print(" Trials:", len(study.trials))
-    print(" Best F1:", study.best_value)
+
+    if completed_trials:
+        print(" Best F1:", best_f1)
+    else:
+        print(" Best F1: N/A (no completed trials yet)")
+
     print(" DB:", storage_path)
 
     return result

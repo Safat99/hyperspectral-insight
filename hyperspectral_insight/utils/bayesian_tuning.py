@@ -58,10 +58,10 @@ def make_objective(
         min_class = min(class_counts.values())
         effective_splits = min(tuning_cv, min_class)
 
-        
+        epochs = tuning_epochs
         if optimizer == "adadelta":
             effective_splits = min(2, effective_splits)
-            tuning_epochs = max(tuning_epochs, 20)    
+            epochs = max(epochs, 20)    
         
         if effective_splits < 2:
             raise optuna.TrialPruned("Too few samples for CV")
@@ -72,7 +72,7 @@ def make_objective(
             X=X,
             y=y,
             n_splits=effective_splits,
-            epochs=tuning_epochs,
+            epochs=epochs,
             batch_size=batch_size,
             max_samples_per_class=max_samples,
             verbose=1,
