@@ -18,17 +18,17 @@ def tune_lite_optuna(
     max_samples: int = 1000,
 ):
     """
-    Bayesian hyperparameter tuning for Hyper3DNet-Lite
+    Bayesian hyperparameter tuning for attention_conv3d
     using Optuna + stratified CV.
     """
 
-    print(f"\n=== Optuna tuning: Hyper3DNet-Lite | Dataset={dataset_name} ===")
+    print(f"\n=== Optuna tuning: attention_conv3d | Dataset={dataset_name} ===")
     os.makedirs(out_dir, exist_ok=True)
 
     # ---------- Dataset loader ----------
     
     cube, gt = load_dataset(dataset_name)
-    cube_norm = minmax_normalize(cube)
+    cube = minmax_normalize(cube)
 
     
     # ---------- Model builder ----------
@@ -59,7 +59,7 @@ def tune_lite_optuna(
 
     # ---------- Build Optuna objective ----------
     objective = make_objective(
-        cube=cube_norm,
+        cube=cube,
         gt=gt,
         model_builder=model_builder,
         optimizer_space=["adam", "adadelta"],

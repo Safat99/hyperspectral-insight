@@ -11,7 +11,8 @@ from hyperspectral_insight.utils.bayesian_tuning import make_objective
 
 def tune_lite_optuna(
     dataset_name: str,
-    n_trials: int = 30,
+    # n_trials: int = 30,
+    trials_per_job: int = 2,
     out_dir: str = "results/hyper3dnetlite/optuna",
     tuning_cv: int = 5,
     tuning_epochs: int = 10,
@@ -28,7 +29,7 @@ def tune_lite_optuna(
     # ---------- Dataset loader ----------
     
     cube, gt = load_dataset(dataset_name)
-    cube_norm = minmax_normalize(cube)
+    cube = minmax_normalize(cube)
 
     
     # ---------- Model builder ----------
@@ -59,7 +60,7 @@ def tune_lite_optuna(
 
     # ---------- Build Optuna objective ----------
     objective = make_objective(
-        cube=cube_norm,
+        cube=cube,
         gt=gt,
         model_builder=model_builder,
         optimizer_space=["adam", "adadelta"],
@@ -70,25 +71,44 @@ def tune_lite_optuna(
         max_samples=max_samples,
         safety_fn=safety_rule,
     )
+    
+    # ---------- Shared Optuna storage ----------
+    storage_path = os.path.join(out_dir, f"optuna_{dataset_name}.db")
+    storage_url = f"sqlite:///{storage_path}"
 
-    # ---------- Run study ----------
+    study_name = f"h3dnetlite_{dataset_name}"
+
     study = optuna.create_study(
         direction="maximize",
-        sampler=optuna.samplers.TPESampler(seed=0)
+        study_name=study_name,
+        storage=storage_url,
+        load_if_exists=True,
+        sampler=optuna.samplers.TPESampler(seed=0),
     )
+    
+
+    # ---------- Run study ----------
+    # study = optuna.create_study(
+    #     direction="maximize",
+    #     sampler=optuna.samplers.TPESampler(seed=0)
+    # )
 
     study.optimize(
         objective,
-        n_trials=n_trials,
+        n_trials=trials_per_job,
         n_jobs=1   # SLURM-safe
+        gc_after_trial=True,
+        show_progress_bar=False,
     )
 
     # ---------- Save results ----------
     result = {
         "dataset": dataset_name,
+        "study_name": study_name,
         "best_params": study.best_params,
         "best_f1": study.best_value,
-        "n_trials": n_trials,
+        # "n_trials": n_trials,
+        "total_trials": len(study.trials),
         "tuning_cv": tuning_cv,
         "tuning_epochs": tuning_epochs,
         "max_samples": max_samples,
@@ -101,10 +121,13 @@ def tune_lite_optuna(
     with open(out_path, "w") as f:
         json.dump(result, f, indent=4)
 
-    print("\n=== Optuna tuning completed ===")
+    print("\n=== Optuna tuning progress saved ===")
+    print(" Dataset:", dataset_name)
+    print(" Trials so far:", len(study.trials))
     print("Best params:", study.best_params)
     print("Best F1:", study.best_value)
-    print("Saved to:", out_path)
+    print(" DB:", storage_path)
+    # print("Saved to:", out_path)
 
     return result
 
@@ -113,7 +136,8 @@ def tune_lite_optuna(
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset", type=str, required=True)
-    parser.add_argument("--trials", type=int, default=30)
+    parser.add_argument("--trials_per_job", type=int, default=2)
+    # parser.add_argument("--trials", type=int, default=30)
     parser.add_argument("--out_dir", type=str, default="results/hyper3dnetlite/new/optuna")
     parser.add_argument("--splits", type=int, default=5)
     parser.add_argument("--epochs", type=int, default=10)
@@ -123,7 +147,7 @@ if __name__ == "__main__":
 
     tune_lite_optuna(
         dataset_name=args.dataset,
-        n_trials=args.trials,
+        trials_per_job=args.trials_per_job,
         out_dir=args.out_dir,
         tuning_cv=args.splits,
         tuning_epochs=args.epochs,
