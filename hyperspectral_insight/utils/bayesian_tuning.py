@@ -30,26 +30,26 @@ def make_objective(
         
         # ---------------- conditional batch size --------------------
         
-        # if patch_size >= 50:
-        #     batch_size = trial.suggest_categorical("batch_size", [8, 16])
-        # elif patch_size >= 33:
-        #     batch_size = trial.suggest_categorical("batch_size", [8, 16, 32])
-        # else:
-        #     batch_size = trial.suggest_categorical(
-        #         "batch_size", [8, 16, 32, 64, 128]
-        #     )
+        if patch_size >= 50:
+            batch_size = trial.suggest_categorical("batch_size", [8, 16])
+        elif patch_size >= 33:
+            batch_size = trial.suggest_categorical("batch_size", [8, 16, 32])
+        else:
+            batch_size = trial.suggest_categorical(
+                "batch_size", [8, 16, 32, 64, 128]
+            )
         
         # -------- Static batch size space (Optuna-safe) --------
-        batch_size = trial.suggest_categorical(
-            "batch_size", [8, 16, 32, 64, 128]
-        )
+        # batch_size = trial.suggest_categorical(
+        #     "batch_size", [8, 16, 32, 64, 128]
+        # )
 
-        # -------- Prune illegal combinations --------
-        if patch_size >= 50 and batch_size > 16:
-            raise optuna.TrialPruned("Batch too large for patch >= 50")
+        # # -------- Prune illegal combinations --------
+        # if patch_size >= 50 and batch_size > 16:
+        #     raise optuna.TrialPruned("Batch too large for patch >= 50")
 
-        if patch_size >= 33 and batch_size > 32:
-            raise optuna.TrialPruned("Batch too large for patch >= 33")
+        # if patch_size >= 33 and batch_size > 32:
+        #     raise optuna.TrialPruned("Batch too large for patch >= 33")
         
         
         # ------------------- Optimizer-specific hyperparameters -----------------

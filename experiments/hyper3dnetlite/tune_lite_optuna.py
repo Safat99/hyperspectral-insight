@@ -100,8 +100,8 @@ def tune_lite_optuna(
     sampler = optuna.samplers.TPESampler(
         seed=seed,
         n_startup_trials=n_startup_trials,
-        multivariate=True,
-        group=True
+        multivariate=False, #if wanna do conditional batch size, set False
+        group=False #same as prev
     )
 
     task_id = int(os.environ.get("SLURM_ARRAY_TASK_ID", 0))

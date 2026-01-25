@@ -6,18 +6,18 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=8
 #SBATCH --gres=gpu:1
-#SBATCH --mem=64G
+#SBATCH --mem=128G
 #SBATCH --time=08:00:00
 
-#SBATCH --array=0-39
+#SBATCH --array=0-0
 #SBATCH --output=slurm_logs/bayesian_opt/%x-%A_%a.out
 #SBATCH --error=slurm_logs/bayesian_opt/%x-%A_%a.err
 
 # ===================== USER SETTINGS =====================
 DATASET="salinas"
 TOTAL_TRIALS=40
-TRIALS_PER_JOB=1           # 20 × 2 = 40 trials
-EPOCHS=30
+TRIALS_PER_JOB=3           # 20 × 2 = 40 trials
+EPOCHS=5 # keeping 5 for smoke test.. main trial it will be 30
 CV_SPLITS=2
 MAX_SAMPLES=2000
 N_STARTUP_TRIALS=10
