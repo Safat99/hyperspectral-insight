@@ -76,7 +76,12 @@ def tune_lite_optuna_adadelta(
     study_name = f"h3dnetlite_{dataset_name}_adadelta"
 
     seed = int(os.environ.get("SLURM_ARRAY_TASK_ID", 0))
-    sampler = optuna.samplers.RandomSampler(seed=seed)
+    # sampler = optuna.samplers.RandomSampler(seed=seed)
+    sampler = optuna.samplers.TPESampler(
+        seed=seed,
+        n_startup_trials=10,   # first 10 trials = random
+        multivariate=True,
+    )
     
     # ---------- Study (IMPORTANT) ----------
     study = optuna.create_study(
