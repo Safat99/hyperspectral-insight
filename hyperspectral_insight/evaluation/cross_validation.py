@@ -1,6 +1,7 @@
 import numpy as np
 from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import OneHotEncoder
+from tensorflow.keras.callbacks import EarlyStopping
 
 from hyperspectral_insight.evaluation.metrics import compute_metrics
 
@@ -15,6 +16,7 @@ def train_one_fold(
     epochs=30,
     batch_size=16,
     verbose=0,
+    use_early_stopping=True,
 ):
     """
     Train a single fold of a supervised model.
@@ -34,10 +36,8 @@ def train_one_fold(
         history: Keras training history object
         metrics: dictionary containing OA, Precision, Recall, F1, Kappa
     """
-
-    # n_classes = int(y_train.max() + 1)
     
-    # One-hot encode labels
+    # -------------One-hot encode labels--------------
     enc = OneHotEncoder(
         categories=[np.arange(n_classes)],
         sparse_output=False,
@@ -45,13 +45,30 @@ def train_one_fold(
     )
     
     # Fit once on full class space
-    enc.fit(np.arange(n_classes).reshape(-1, 1))
-    
+    enc.fit(np.arange(n_classes).reshape(-1, 1)) 
     y_train_oh = enc.fit_transform(y_train.reshape(-1, 1))
     y_val_oh = enc.transform(y_val.reshape(-1, 1))
 
-    # Build model
-    model = model_fn(input_shape=X_train.shape[1:], n_classes=n_classes)
+    # ---------------- Build model ---------------
+    model = model_fn(
+        input_shape=X_train.shape[1:], 
+        n_classes=n_classes
+    )
+    
+    callbacks = []
+    
+    # -------- Early stopping --------
+    if use_early_stopping:
+        early_stop = EarlyStopping(
+            monitor="val_loss",
+            patience=3,
+            min_delta=1e-4,
+            restore_best_weights=True,
+            verbose=0,
+        )
+        
+        callbacks.append(early_stop)
+    
 
     # Train model
     history = model.fit(
@@ -59,18 +76,21 @@ def train_one_fold(
         validation_data=(X_val, y_val_oh),
         epochs=epochs,
         batch_size=batch_size,
+        callbacks=[early_stop],
         verbose=verbose,
     )
     
+    trained_epochs = len(history.history["loss"])
+    
     # Convert to plain dict for saving
-    history_dict = {
-        k : list(v) for k, v in history.history.items()
-    }
+    history_dict = {k : list(v) for k, v in history.history.items()}
+    history_dict["trained_epochs"] = trained_epochs
 
     # Predict fold accuracy
     y_pred = np.argmax(model.predict(X_val, verbose=0), axis=1)
     fold_metrics = compute_metrics(y_val, y_pred)
-
+    fold_metrics["trained_epochs"] = trained_epochs
+    
     return model, history_dict, fold_metrics
 
 def kfold_cross_validation(
@@ -84,6 +104,7 @@ def kfold_cross_validation(
     random_state=0,
     verbose=0,
     max_samples_per_class=None,
+    use_early_stopping=True,
 ):
     """
     Perform K-fold cross-validation on a patch dataset.
@@ -139,6 +160,7 @@ def kfold_cross_validation(
             epochs=epochs,
             batch_size=batch_size,
             verbose=verbose,
+            use_early_stopping=use_early_stopping,
         )
         
         
@@ -147,6 +169,11 @@ def kfold_cross_validation(
         
         print(" Fold Metrics:", metrics)
 
+    epoch_list = [m["trained_epochs"] for m in fold_results]
+
+    mean_trained_epochs = float(np.mean(epoch_list))
+    std_trained_epochs = float(np.std(epoch_list))
+    
     # Aggregate results
     keys = fold_results[0].keys()
     mean_metrics = {k: float(np.mean([d[k] for d in fold_results])) for k in keys}
@@ -157,6 +184,8 @@ def kfold_cross_validation(
         "mean_metrics": mean_metrics,
         "std_metrics": std_metrics,
         "histories" : histories,
+        "mean_trained_epochs": mean_trained_epochs,
+        "std_trained_epochs": std_trained_epochs,
     }
 
 

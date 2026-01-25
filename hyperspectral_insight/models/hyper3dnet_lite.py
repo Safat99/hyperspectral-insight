@@ -6,13 +6,20 @@ def build_hyper3dnet_lite(
     input_shape, 
     n_classes,
     optimizer_name: str = "adam", 
-    lr: float = 1e-3
+    lr: float = 1e-3,
+    rho: float = 0.95,
+    epsilon: float = 1e-7,
     ):
     """
     Lightweight Hyper3DNet-Lite architecture.
+    
     input_shape: (win, win, bands, 1)
     optimizer_name: "adam" or "adadelta"
     lr: learning rate (used only for Adam)
+    
+    Optimizer parameters:
+    - Adam: lr
+    - Adadelta: rho, epsilon
     """
     inp = layers.Input(shape=input_shape)
 
@@ -38,11 +45,18 @@ def build_hyper3dnet_lite(
 
     model = models.Model(inp, out)
     
-    # ----------- Optimizer selection ------------------
-    if optimizer_name.lower() == "adadelta":
-        optimizer = tf.keras.optimizers.Adadelta()
-    elif optimizer_name.lower() == "adam":
-        optimizer = tf.keras.optimizers.Adam(learning_rate=lr)
+     # -------- Optimizer selection (TUNABLE) --------
+    if optimizer_name.lower() == "adam":
+        optimizer = tf.keras.optimizers.Adam(
+            learning_rate=lr
+        )
+
+    elif optimizer_name.lower() == "adadelta":
+        optimizer = tf.keras.optimizers.Adadelta(
+            rho=rho,
+            epsilon=epsilon
+        )
+
     else:
         raise ValueError(f"Unknown optimizer: {optimizer_name}")
     

@@ -81,6 +81,7 @@ def tune_lite_optuna_adadelta(
         seed=seed,
         n_startup_trials=10,   # first 10 trials = random
         multivariate=True,
+        consider_pruned_trials=False,
     )
     
     # ---------- Study (IMPORTANT) ----------
