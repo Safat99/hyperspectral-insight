@@ -42,7 +42,7 @@ def tune_lite_optuna_adadelta(
     # ---------- Safety rule (OOM only) ----------
     def safety_rule(patch, stride, batch, optimizer):
         # Adadelta-only, conservative
-        if patch == 50:
+        if patch == 50 and batch >= 64:
             return False
         return True
 
@@ -75,13 +75,16 @@ def tune_lite_optuna_adadelta(
     storage_url = f"sqlite:///{storage_path}"
     study_name = f"h3dnetlite_{dataset_name}_adadelta"
 
+    seed = int(os.environ.get("SLURM_ARRAY_TASK_ID", 0))
+    sampler = optuna.samplers.RandomSampler(seed=seed)
+    
     # ---------- Study (IMPORTANT) ----------
     study = optuna.create_study(
         direction="maximize",
         study_name=study_name,
         storage=storage_url,
         load_if_exists=True,
-        sampler=optuna.samplers.RandomSampler(seed=0),
+        sampler=sampler,
         pruner=optuna.pruners.NopPruner(),
     )
     
