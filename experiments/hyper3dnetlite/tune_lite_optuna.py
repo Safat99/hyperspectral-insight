@@ -13,7 +13,7 @@ def tune_lite_optuna(
     dataset_name: str,
     # n_trials: int = 30,
     trials_per_job: int = 2,
-    out_dir: str = "results/hyper3dnetlite/optuna",
+    out_dir: str = "results/hyper3dnetlite/new/optuna",
     tuning_cv: int = 5,
     tuning_epochs: int = 10,
     max_samples: int = 1000,
@@ -71,7 +71,7 @@ def tune_lite_optuna(
         model_builder=model_builder,
         optimizer_space=["adam", "adadelta"],
         batch_space=[16, 64, 128],
-        patch_stride_space=PATCH_STRIDE_MAP,
+        patch_stride_map=PATCH_STRIDE_MAP,
         tuning_cv=tuning_cv,
         tuning_epochs=tuning_epochs,
         max_samples=max_samples,
@@ -81,7 +81,6 @@ def tune_lite_optuna(
     # ---------- Shared Optuna storage ----------
     storage_path = os.path.join(out_dir, f"optuna_{dataset_name}.db")
     storage_url = f"sqlite:///{storage_path}"
-
     study_name = f"h3dnetlite_{dataset_name}"
 
     study = optuna.create_study(

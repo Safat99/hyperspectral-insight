@@ -58,9 +58,13 @@ def make_objective(
         min_class = min(class_counts.values())
         effective_splits = min(tuning_cv, min_class)
 
+        
+        if optimizer == "adadelta":
+            effective_splits = min(2, effective_splits)
+            tuning_epochs = max(tuning_epochs, 20)    
+        
         if effective_splits < 2:
             raise optuna.TrialPruned("Too few samples for CV")
-        
         
         # ----- CV evaluation -----
         results = kfold_cross_validation(
