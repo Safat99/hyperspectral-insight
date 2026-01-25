@@ -30,6 +30,18 @@ def tune_lite_optuna(
     # ---------- Dataset ----------
     cube, gt = load_dataset(dataset_name)
     cube = minmax_normalize(cube)
+    
+    # ---------- Dataset-specific memory cap ----------
+    if dataset_name.lower() in ["salinas", "pavia_centre"]:
+        max_samples_eff = min(max_samples, 800)
+    else:
+        max_samples_eff = max_samples
+
+    print(
+        f"[INFO] Using max_samples_per_class = {max_samples_eff} "
+        f"for dataset = {dataset_name}",
+        flush=True
+    )
 
     # ---------- Model builder ----------
     def model_builder(input_shape, n_classes, optimizer, opt_params):
@@ -65,7 +77,7 @@ def tune_lite_optuna(
         patch_stride_map=PATCH_STRIDE_MAP,
         tuning_cv=tuning_cv,
         tuning_epochs=tuning_epochs,
-        max_samples=max_samples,
+        max_samples=max_samples_eff,
     )
 
     # ---------- Storage (shared across array jobs)------------------

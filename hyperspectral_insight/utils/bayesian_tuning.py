@@ -61,6 +61,13 @@ def make_objective(
             stride=stride,
             max_samples_per_class=max_samples
         )
+        
+        # ---------------- Memory safety prune ----------------
+        # Large patches on large datasets can exceed host RAM
+        if patch_size >= 50 and X.shape[0] > 50_000:
+            raise optuna.TrialPruned(
+                f"Memory-unsafe config: patch={patch_size}, n_patches={X.shape[0]}"
+            )
 
         # ----- Model factory -----
         def model_fn(input_shape, n_classes):
