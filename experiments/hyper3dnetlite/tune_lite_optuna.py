@@ -101,7 +101,7 @@ def tune_lite_optuna(
         seed=seed,
         n_startup_trials=n_startup_trials,
         multivariate=True,
-        consider_pruned_trials=False,
+        group=True
     )
 
     task_id = int(os.environ.get("SLURM_ARRAY_TASK_ID", 0))

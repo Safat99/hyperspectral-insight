@@ -20,7 +20,7 @@ TRIALS_PER_JOB=1           # 20 × 2 = 40 trials
 EPOCHS=30
 CV_SPLITS=2
 MAX_SAMPLES=2000
-N_STARTUP_TRIALS=5
+N_STARTUP_TRIALS=10
 # =========================================================
 
 # ---------------- Environment ----------------
