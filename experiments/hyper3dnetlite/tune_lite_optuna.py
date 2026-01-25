@@ -58,6 +58,12 @@ def tune_lite_optuna(
             return False
         return True
 
+    PATCH_STRIDE_MAP = {
+        "p5_s1": (5, 1),
+        "p25_s1": (25, 1),
+        "p50_s25": (50, 25),
+    }
+    
     # ---------- Build Optuna objective ----------
     objective = make_objective(
         cube=cube,
@@ -65,7 +71,7 @@ def tune_lite_optuna(
         model_builder=model_builder,
         optimizer_space=["adam", "adadelta"],
         batch_space=[16, 64, 128],
-        patch_stride_space=[(5, 1), (25, 1), (50, 25)],
+        patch_stride_space=PATCH_STRIDE_MAP,
         tuning_cv=tuning_cv,
         tuning_epochs=tuning_epochs,
         max_samples=max_samples,
@@ -96,7 +102,7 @@ def tune_lite_optuna(
     study.optimize(
         objective,
         n_trials=trials_per_job,
-        n_jobs=1   # SLURM-safe
+        n_jobs=1,   # SLURM-safe
         gc_after_trial=True,
         show_progress_bar=False,
     )

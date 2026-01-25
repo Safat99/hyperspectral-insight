@@ -10,7 +10,7 @@ def make_objective(
     model_builder,
     optimizer_space,
     batch_space,
-    patch_stride_space,
+    patch_stride_map,
     tuning_cv=5,
     tuning_epochs=10,
     max_samples=1000,
@@ -26,10 +26,12 @@ def make_objective(
         # ----- Search space -----
         optimizer = trial.suggest_categorical("optimizer", optimizer_space)
         batch_size = trial.suggest_categorical("batch_size", batch_space)
-        patch_size, stride = trial.suggest_categorical(
-            "patch_stride", patch_stride_space
+        patch_key = trial.suggest_categorical(
+            "patch_stride", list(patch_stride_map.keys()
+                                 )
         )
-
+        patch_size, stride = patch_stride_map[patch_key]
+        
         # ----- Safety / pruning -----
         if safety_fn is not None:
             if not safety_fn(patch_size, stride, batch_size, optimizer):
