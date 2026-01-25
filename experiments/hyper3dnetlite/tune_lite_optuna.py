@@ -1,3 +1,14 @@
+import os
+os.environ["TF_XLA_FLAGS"] = "--tf_xla_enable_xla_devices=false"
+os.environ["TF_ENABLE_XLA"] = "0"
+
+import tensorflow as tf
+
+gpus = tf.config.list_physical_devices("GPU")
+if gpus:
+    for gpu in gpus:
+        tf.config.experimental.set_memory_growth(gpu, True)
+
 import argparse
 import json
 import os
@@ -9,7 +20,6 @@ from hyperspectral_insight.data.loaders import load_dataset
 from hyperspectral_insight.data.normalization import minmax_normalize
 from hyperspectral_insight.models.hyper3dnet_lite import build_hyper3dnet_lite
 from hyperspectral_insight.utils.bayesian_tuning import make_objective
-
 
 def tune_lite_optuna(
     dataset_name: str,
@@ -65,7 +75,7 @@ def tune_lite_optuna(
         "p17_s1": (17, 1),
         "p25_s1": (25, 1),
         "p33_s2": (33, 2),
-        "p50_s2": (50, 2)
+        "p50_s1": (50, 1)
     }
 
     # ---------- Objective ----------
@@ -91,6 +101,7 @@ def tune_lite_optuna(
         seed=seed,
         n_startup_trials=n_startup_trials,
         multivariate=True,
+        consider_pruned_trials=False,
     )
 
     task_id = int(os.environ.get("SLURM_ARRAY_TASK_ID", 0))
