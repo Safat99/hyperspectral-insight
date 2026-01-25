@@ -130,13 +130,27 @@ def tune_lite_optuna_adadelta(
         callbacks=[on_trial_complete],
     )
 
-    # ---------- Save ----------
+    completed_trials = [
+        t for t in study.trials
+        if t.state == optuna.trial.TrialState.COMPLETE
+    ]
+
+    if completed_trials:
+        best_trial = study.best_trial
+        best_f1 = best_trial.value
+        best_params = best_trial.params
+    else:
+        best_f1 = None
+        best_params = None
+        print(" No completed trials yet (all trials pruned).")
+
     result = {
         "dataset": dataset_name,
         "optimizer": "adadelta",
-        "best_f1": study.best_value,
-        "best_params": study.best_params,
+        "best_f1": best_f1,
+        "best_params": best_params,
         "total_trials": len(study.trials),
+        "completed_trials": len(completed_trials),
         "tuning_epochs": tuning_epochs,
         "tuning_cv": tuning_cv,
         "max_samples": max_samples,

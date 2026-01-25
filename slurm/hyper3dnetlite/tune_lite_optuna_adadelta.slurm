@@ -37,7 +37,7 @@ echo "Node: $(hostname)"
 echo "=============================="
 
 # ---------- Run ONE Optuna trial ----------
-python experiments/hyper3dnet_lite/tune_lite_optuna_adadelta.py \
+python experiments/hyper3dnetlite/tune_lite_optuna_adadelta.py \
     --dataset "$DATASET" \
     --trials_per_job 1 \
     --epochs 30 \
