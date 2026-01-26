@@ -1,5 +1,3 @@
-# experiments/band_selection/run_ssep.py
-
 import os
 import json
 import numpy as np
@@ -16,47 +14,49 @@ from hyperspectral_insight.models.hyper3dnet_lite import build_hyper3dnet_lite
 def run_ssep(
     dataset_name: str,
     num_bands: int = 20,
-    patch_size: int = 25,
+    patch_size: int = 17,
     n_splits: int = 10,
-    epochs: int = 50,
-    batch_size: int = 128,
-    save_dir: str = "results/hyper3dnetlite/ssep/",
+    epochs: int = 25,
+    batch_size: int = 32,
+    optimizer: str = "adam",
+    lr: float = 1e-3,
+    rho: float = 0.95,
+    epsilon: float = 1e-7,
+    save_dir: str = "results/hyper3dnetlite/ssep/new/",
     verbose: bool = True,
-    max_samples_per_class: int = 2000,
-    lr: float = 5e-4
+    max_samples_per_class: int = None,
 ):
     """
-    SSEP band selection + Hyper3DNet-Lite CV evaluation.
+    Hyper3DNet-Lite with SSEP band selection.
 
-    Steps:
+    Pipeline:
         1) Load dataset
-        2) Normalize
-        3) SSEP → top-K bands (supervised)
+        2) Normalize cube per band
+        3) Run SSEP selection (supervised)
         4) Reduce cube
-        5) Patch extraction
-        6) Stratified 10-fold CV with Hyper3DNet-Lite
-        7) Save results
-
-    Args:
-        dataset_name: e.g., 'indian_pines'
-        num_bands: number of final selected bands
-        patch_size: spatial patch size
-        n_splits: CV folds
-        epochs: training epochs
-        batch_size: training batch
-        save_dir: results directory
+        5) Extract patches
+        6) Stratified K-Fold CV
+        7) Save results (bands + performance)
     """
 
-    print(f"\n=== SSEP ({num_bands} bands) on {dataset_name} ===")
+    print(f"\n=== Hyper3DNet-Lite + SSEP ({num_bands} bands) on {dataset_name} ===")
+    print(f"Optimizer: {optimizer}")
 
-    # Load
+    # -----------------------------------------
+    # 1. Load dataset
+    # -----------------------------------------
     cube, gt = load_dataset(dataset_name)
 
-    # Normalize
+    # -----------------------------------------
+    # 2. Normalize per band
+    # -----------------------------------------
     cube_norm = minmax_normalize(cube)
 
-    # SSEP band-selection
-    print("Running SSEP band selection...")
+    # -----------------------------------------
+    # 3. Band-selection (SSEP)
+    # -----------------------------------------
+    print("Running SSEP band selection ...")
+
     selected_bands = run_ssep_pipeline(
         cube=cube_norm,
         gt=gt,
@@ -64,30 +64,52 @@ def run_ssep(
         verbose=verbose,
     )
 
-    print(f"  Selected bands ({num_bands}): {selected_bands}")
+    print(f"  Selected {num_bands} bands:")
     print(f"  {selected_bands}")
 
-    # Reduce cube
+    # -----------------------------------------
+    # 4. Reduce cube
+    # -----------------------------------------
     cube_sel = cube_norm[:, :, selected_bands]
 
-    # Extract patches
-    # X, y = extract_patches(cube_sel, gt, patch_size)
+    # -----------------------------------------
+    # 5. Patch extraction
+    # -----------------------------------------
     X, y = extract_patches(
-        cube_sel, gt,
+        cube_sel,
+        gt,
         win=patch_size,
         drop_label0=True,
-        max_samples_per_class=max_samples_per_class
+        max_samples_per_class=max_samples_per_class,
     )
-    print(f"  Patch shape: {X.shape}")
-    print(f"  #classes: {y.max()+1}")
 
-    # CV evaluation
-    
+    print(f"  Patch shape: {X.shape}")
+    print(f"  Number of classes: {int(y.max()) + 1}")
+
+    # -----------------------------------------
+    # 6. Stratified K-Fold CV
+    # -----------------------------------------
+    print("Running Stratified K-Fold CV...")
+
     def model_fn(input_shape, n_classes):
-        # If your build_hyper3dnet doesn't accept lr, remove lr=lr
-        return build_hyper3dnet_lite(input_shape, n_classes, lr=lr)
-    
-    print("Running Stratified CV...")
+        if optimizer.lower() == "adam":
+            return build_hyper3dnet_lite(
+                input_shape,
+                n_classes,
+                optimizer_name="adam",
+                lr=lr,
+            )
+        elif optimizer.lower() == "adadelta":
+            return build_hyper3dnet_lite(
+                input_shape,
+                n_classes,
+                optimizer_name="adadelta",
+                rho=rho,
+                epsilon=epsilon,
+            )
+        else:
+            raise ValueError(f"Unsupported optimizer: {optimizer}")
+
     results = kfold_cross_validation(
         model_fn=model_fn,
         X=X,
@@ -97,21 +119,31 @@ def run_ssep(
         batch_size=batch_size,
         shuffle=True,
         random_state=0,
-        verbose=verbose,
+        verbose=1,
+        use_early_stopping=False,
     )
 
-    # Save
+    # -----------------------------------------
+    # 7. Save results
+    # -----------------------------------------
     os.makedirs(save_dir, exist_ok=True)
-    out_json = os.path.join(save_dir, f"{dataset_name}_ssep_{num_bands}bands_hyper3dnetlite_{n_splits}fold_cv.json")
-    out_bands = os.path.join(save_dir, f"{dataset_name}_ssep_{num_bands}bands_hyper3dnetlite_{n_splits}fold.npy")
+
+    out_json = os.path.join(
+        save_dir,
+        f"{dataset_name}_lite_ssep_{num_bands}bands_{n_splits}fold_cv.json",
+    )
+    out_bands = os.path.join(
+        save_dir,
+        f"{dataset_name}_lite_ssep_{num_bands}bands_{n_splits}fold_cv.npy",
+    )
 
     with open(out_json, "w") as f:
         json.dump(results, f, indent=4)
 
     np.save(out_bands, np.array(selected_bands, dtype=np.int32))
 
-    print(f"Saved CV results: {out_json}")
-    print(f"Saved band list:  {out_bands}")
+    print(f"Saved CV results to: {out_json}")
+    print(f"Saved selected bands to: {out_bands}")
 
     return {
         "selected_bands": selected_bands,
@@ -125,13 +157,17 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset", type=str, required=True)
     parser.add_argument("--num_bands", type=int, default=20)
-    parser.add_argument("--patch", type=int, default=25)
+    parser.add_argument("--patch", type=int, default=17)
     parser.add_argument("--splits", type=int, default=10)
-    parser.add_argument("--epochs", type=int, default=50)
-    parser.add_argument("--batch_size", type=int, default=128)
+    parser.add_argument("--epochs", type=int, default=25)
+    parser.add_argument("--batch_size", type=int, default=32)
+    parser.add_argument("--optimizer", type=str, default="adam")
+    parser.add_argument("--learning_rate", type=float, default=1e-3)
+    parser.add_argument("--rho", type=float, default=0.95)
+    parser.add_argument("--epsilon", type=float, default=1e-7)
     parser.add_argument("--verbose", action="store_true")
-    parser.add_argument("--learning_rate", type=float, default=5e-4)
     parser.add_argument("--max_samples", type=int, default=None)
+
     args = parser.parse_args()
 
     run_ssep(
@@ -141,7 +177,10 @@ if __name__ == "__main__":
         n_splits=args.splits,
         epochs=args.epochs,
         batch_size=args.batch_size,
-        verbose=args.verbose,
+        optimizer=args.optimizer,
         lr=args.learning_rate,
+        rho=args.rho,
+        epsilon=args.epsilon,
+        verbose=args.verbose,
         max_samples_per_class=args.max_samples,
     )

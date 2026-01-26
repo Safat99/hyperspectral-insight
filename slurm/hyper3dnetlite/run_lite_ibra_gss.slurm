@@ -100,7 +100,7 @@ else
         --splits 10 \
         --epochs 25 \
         --batch_size $BATCH \
-        --learning_rate 1.0 \  # dummy, not used
+        --learning_rate 1.0 \
         --max_samples 2000 \
         --optimizer adadelta \
         --rho $RHO \

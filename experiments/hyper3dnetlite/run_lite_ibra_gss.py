@@ -24,7 +24,7 @@ def run_lite_ibra_gss(
     lr: float = 1e-3,
     rho: float = 0.95,
     epsilon: float = 1e-7,
-    save_dir: str = "results/hyper3dnetlite/reduced_ibra_gss/",
+    save_dir: str = "results/hyper3dnetlite/reduced_ibra_gss/new/",
     verbose: bool = True,
     max_samples_per_class: int = None, 
 ):
