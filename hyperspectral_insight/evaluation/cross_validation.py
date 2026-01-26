@@ -59,15 +59,15 @@ def train_one_fold(
     
     # -------- Early stopping --------
     if use_early_stopping:
-        early_stop = EarlyStopping(
-            monitor="val_loss",
-            patience=3,
-            min_delta=1e-4,
-            restore_best_weights=True,
-            verbose=0,
+        callbacks.append(
+            EarlyStopping(
+                monitor="val_loss",
+                patience=5,
+                min_delta=1e-4,
+                restore_best_weights=True,
+                verbose=0,
+            )
         )
-        
-        callbacks.append(early_stop)
     
 
     # Train model
@@ -76,7 +76,7 @@ def train_one_fold(
         validation_data=(X_val, y_val_oh),
         epochs=epochs,
         batch_size=batch_size,
-        callbacks=[early_stop],
+        callbacks=callbacks,
         verbose=verbose,
     )
     
