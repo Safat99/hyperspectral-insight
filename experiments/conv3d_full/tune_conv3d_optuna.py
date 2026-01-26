@@ -33,11 +33,11 @@ def tune_conv3d_optuna(
     cube, gt = load_dataset(dataset_name)
     cube = minmax_normalize(cube)
 
-    # ---------- Dataset-specific memory cap (stricter than Lite) ----------
+    # ---------- Dataset-specific memory cap ----------
     if dataset_name.lower() in ["salinas", "pavia_centre"]:
-        max_samples_eff = min(max_samples, 600)
+        max_samples_eff = min(max_samples, 800)
     else:
-        max_samples_eff = min(max_samples, 1000)
+        max_samples_eff = max_samples
 
     print(
         f"[INFO] Using max_samples_per_class = {max_samples_eff} "
