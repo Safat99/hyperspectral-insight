@@ -16,14 +16,17 @@ def run_lite_ibra_gss(
     num_bands: int = 5,
     vif_threshold: float = 10.0,
     max_distance: float = 5.0,
-    patch_size: int = 11,
+    patch_size: int = 17,
     n_splits: int = 10,
-    epochs: int = 50,
-    batch_size: int = 128,
+    epochs: int = 25,
+    batch_size: int = 32,
+    optimizer: str = "adam",
+    lr: float = 1e-3,
+    rho: float = 0.95,
+    epsilon: float = 1e-7,
     save_dir: str = "results/hyper3dnetlite/reduced_ibra_gss/",
     verbose: bool = True,
-    max_samples_per_class: int = None,
-    lr: float = 1e-3,
+    max_samples_per_class: int = None, 
 ):
     """
     Hyper3DNet-Lite with IBRA+GSS band selection.
@@ -51,7 +54,8 @@ def run_lite_ibra_gss(
     """
 
     print(f"\n=== Hyper3DNet-Lite + IBRA+GSS ({num_bands} bands) on {dataset_name} ===")
-
+    print(f"Optimizer: {optimizer}")
+    
     # -----------------------------------------
     # 1. Load dataset
     # -----------------------------------------
@@ -102,8 +106,23 @@ def run_lite_ibra_gss(
     print("Running Stratified K-Fold CV...")
 
     def model_fn(input_shape, n_classes):
-        # If your build_hyper3dnet doesn't accept lr, remove lr=lr
-        return build_hyper3dnet_lite(input_shape, n_classes, lr=lr)
+        if optimizer.lower() == "adam":
+            return build_hyper3dnet_lite(
+                input_shape,
+                n_classes,
+                optimizer_name="adam",
+                lr=lr,
+            )
+        elif optimizer.lower() == "adadelta":
+            return build_hyper3dnet_lite(
+                input_shape,
+                n_classes,
+                optimizer_name="adadelta",
+                rho=rho,
+                epsilon=epsilon,
+            )
+        else:
+            raise ValueError(f"Unsupported optimizer: {optimizer}")
 
     results = kfold_cross_validation(
         model_fn=model_fn,
@@ -153,12 +172,15 @@ if __name__ == "__main__":
     parser.add_argument("--num_bands", type=int, default=20)
     parser.add_argument("--vif_threshold", type=float, default=10.0)
     parser.add_argument("--max_distance", type=float, default=5.0)
-    parser.add_argument("--patch", type=int, default=25)
+    parser.add_argument("--patch", type=int, default=17)
     parser.add_argument("--splits", type=int, default=10)
-    parser.add_argument("--epochs", type=int, default=50)
-    parser.add_argument("--batch_size", type=int, default=128)
+    parser.add_argument("--epochs", type=int, default=25)
+    parser.add_argument("--batch_size", type=int, default=32)
+    parser.add_argument("--optimizer", type=str, default="adam")
+    parser.add_argument("--learning_rate", type=float, default=1e-3)
+    parser.add_argument("--rho", type=float, default=0.95)
+    parser.add_argument("--epsilon", type=float, default=1e-7)
     parser.add_argument("--verbose", action="store_true")
-    parser.add_argument("--learning_rate", type=float, default=5e-4)
     parser.add_argument("--max_samples", type=int, default=None)
 
     args = parser.parse_args()
@@ -172,7 +194,10 @@ if __name__ == "__main__":
         n_splits=args.splits,
         epochs=args.epochs,
         batch_size=args.batch_size,
-        verbose=args.verbose,
+        optimizer=args.optimizer,
         lr=args.learning_rate,
+        rho=args.rho,
+        epsilon=args.epsilon,
+        verbose=args.verbose,
         max_samples_per_class=args.max_samples,
     )
