@@ -95,13 +95,14 @@ def tune_lite_optuna(
     storage_url = f"sqlite:///{storage_path}?timeout=60"
     study_name = f"h3dnetlite_{dataset_name}"
 
-    seed = int(os.environ.get("SLURM_ARRAY_TASK_ID", 0))
+    # seed = int(os.environ.get("SLURM_ARRAY_TASK_ID", 0))
+    seed = 1000 + int(os.environ.get("SLURM_ARRAY_TASK_ID", 0))
     
     sampler = optuna.samplers.TPESampler(
         seed=seed,
         n_startup_trials=n_startup_trials,
-        multivariate=False, #if wanna do conditional batch size, set False
-        group=False #same as prev
+        multivariate=True, #if wanna do conditional batch size, set False
+        group=True #same as prev
     )
 
     task_id = int(os.environ.get("SLURM_ARRAY_TASK_ID", 0))

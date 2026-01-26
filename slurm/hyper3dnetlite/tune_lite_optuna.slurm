@@ -7,17 +7,17 @@
 #SBATCH --cpus-per-task=8
 #SBATCH --gres=gpu:1
 #SBATCH --mem=128G
-#SBATCH --time=08:00:00
+#SBATCH --time=23:00:00
 
-#SBATCH --array=0-0
+#SBATCH --array=0-7
 #SBATCH --output=slurm_logs/bayesian_opt/%x-%A_%a.out
 #SBATCH --error=slurm_logs/bayesian_opt/%x-%A_%a.err
 
 # ===================== USER SETTINGS =====================
 DATASET="salinas"
-TOTAL_TRIALS=40
-TRIALS_PER_JOB=3           # 20 × 2 = 40 trials
-EPOCHS=5 # keeping 5 for smoke test.. main trial it will be 30
+
+TRIALS_PER_JOB=3          # safe against mid-trial timeout
+EPOCHS=30                 # full training
 CV_SPLITS=2
 MAX_SAMPLES=2000
 N_STARTUP_TRIALS=10
@@ -36,8 +36,9 @@ mkdir -p slurm_logs/bayesian_opt
 
 echo "========================================"
 echo "Dataset:            $DATASET"
-echo "Total trials goal:  $TOTAL_TRIALS"
 echo "Trials per job:     $TRIALS_PER_JOB"
+echo "Epochs:             $EPOCHS"
+echo "CV splits:          $CV_SPLITS"
 echo "Array task ID:      $SLURM_ARRAY_TASK_ID"
 echo "Node:               $(hostname)"
 echo "========================================"
