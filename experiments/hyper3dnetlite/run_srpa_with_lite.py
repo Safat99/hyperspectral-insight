@@ -60,7 +60,7 @@ def run_srpa(
     selected_bands, scores = srpa_selection_3dcnn(
         cube=cube_norm,
         gt=gt,
-        patch_size=patch_size,
+        patch_size=25,
         num_bands=num_bands,
     )
 
