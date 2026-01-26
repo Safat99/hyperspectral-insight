@@ -134,6 +134,7 @@ def run_lite_ibra_gss(
         shuffle=True,
         random_state=0,
         verbose=1,
+        use_early_stopping=False,
     )
 
     # -----------------------------------------
