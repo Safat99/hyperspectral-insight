@@ -1,13 +1,5 @@
-import os
-os.environ["TF_XLA_FLAGS"] = "--tf_xla_enable_xla_devices=false"
-os.environ["TF_ENABLE_XLA"] = "0"
-
-import tensorflow as tf
-
-gpus = tf.config.list_physical_devices("GPU")
-if gpus:
-    for gpu in gpus:
-        tf.config.experimental.set_memory_growth(gpu, True)
+from hyperspectral_insight.utils.tf_runtime import configure_tensorflow_runtime
+configure_tensorflow_runtime()
 
 import argparse
 import json
