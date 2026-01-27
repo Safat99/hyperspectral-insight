@@ -23,13 +23,15 @@ def run_3dcnn_ssep(
     save_dir: str = "results/conv3d_full/ssep",
     verbose: bool = True,
     max_samples_per_class: int = 2000,
-    lr: float = 1e-3
+    lr: float = 1e-3,
+    optimizer: str = "adam",
 ):
     """
     Full 3D CNN with SSEP band selection.
     """
 
     print(f"\n=== 3D CNN + SSEP ({num_bands} bands) on {dataset_name} ===")
+    print(f"Optimizer: {optimizer}")
 
     # 1. Load
     cube, gt = load_dataset(dataset_name)
@@ -77,7 +79,8 @@ def run_3dcnn_ssep(
         batch_size=batch_size,
         shuffle=True,
         random_state=0,
-        verbose=0,
+        verbose=1,
+        max_samples_per_class=max_samples_per_class,
     )
 
     # 7. Save
@@ -116,6 +119,7 @@ if __name__ == "__main__":
     parser.add_argument("--verbose", action="store_true")
     parser.add_argument("--learning_rate", type=float, default=1e-3)
     parser.add_argument("--max_samples", type=int, default=2000)
+    parser.add_argument("--optimizer", type=str, default="adam")
     args = parser.parse_args()
 
     run_3dcnn_ssep(
@@ -128,4 +132,5 @@ if __name__ == "__main__":
         verbose=args.verbose,
         lr=args.learning_rate,
         max_samples_per_class=args.max_samples,
+        optimizer=args.optimizer,
     )

@@ -24,13 +24,14 @@ def run_3dcnn_srpa(
     verbose: bool = True,
     max_samples: int = 2000,
     lr: float = 5e-4,
+    optimizer: str = "adam",
 ):
     """
     Full 3D CNN with SRPA band selection.
     """
 
     print(f"\n=== 3D CNN + SRPA ({num_bands} bands) on {dataset_name} ===")
-
+    print(f"Optimizer: {optimizer}")
     # 1. Load
     cube, gt = load_dataset(dataset_name)
 
@@ -116,6 +117,7 @@ if __name__ == "__main__":
     parser.add_argument("--verbose", action="store_true")
     parser.add_argument("--learning_rate", type=float, default=1e-3)
     parser.add_argument("--max_samples", type=int, default=2000)
+    parser.add_argument("--optimizer", type=str, default="adam")
     args = parser.parse_args()
 
     run_3dcnn_srpa(
@@ -128,4 +130,5 @@ if __name__ == "__main__":
         verbose=args.verbose,
         lr=args.learning_rate,
         max_samples=args.max_samples,
+        optimizer=args.optimizer,
     )
