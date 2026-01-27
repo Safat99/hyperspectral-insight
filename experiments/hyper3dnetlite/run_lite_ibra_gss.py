@@ -135,6 +135,7 @@ def run_lite_ibra_gss(
         random_state=0,
         verbose=1,
         use_early_stopping=False,
+        max_samples_per_class=max_samples_per_class,
     )
 
     # -----------------------------------------
