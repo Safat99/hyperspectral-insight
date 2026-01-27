@@ -80,7 +80,7 @@ def run_srpa(
         gt,
         win=patch_size,
         drop_label0=True,
-        max_samples_per_class=max_samples_per_class,
+        max_samples_per_class=None,
     )
 
     print(f"  Patch shape: {X.shape}")
@@ -121,6 +121,7 @@ def run_srpa(
         random_state=0,
         verbose=1,
         use_early_stopping=False,
+        max_samples_per_class=max_samples_per_class,
     )
 
     # -----------------------------------------

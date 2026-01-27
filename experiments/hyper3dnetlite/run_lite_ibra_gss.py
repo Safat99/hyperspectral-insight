@@ -94,7 +94,7 @@ def run_lite_ibra_gss(
         cube_sel, gt,
         win=patch_size,
         drop_label0=True,
-        max_samples_per_class=max_samples_per_class
+        max_samples_per_class=None
     )
 
     print(f"  Patch shape: {X.shape}")
