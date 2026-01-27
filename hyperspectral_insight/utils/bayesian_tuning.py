@@ -72,7 +72,7 @@ def make_objective(
             gt,
             win=patch_size,
             stride=stride,
-            max_samples_per_class=max_samples
+            max_samples_per_class=None
         )
         
         # ---------------- Memory safety prune ----------------

@@ -18,7 +18,7 @@ from hyperspectral_insight.utils.bayesian_tuning import make_objective
 def tune_conv3d_optuna(
     dataset_name: str,
     trials_per_job: int = 2,
-    out_dir: str = "results/conv3d_full/new/optuna",
+    out_dir: str = "results/conv3d_full/new/optuna/updated/",
     tuning_cv: int = 2,
     tuning_epochs: int = 30,
     max_samples: int = 2000,

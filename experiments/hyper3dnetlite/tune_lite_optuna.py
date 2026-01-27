@@ -16,7 +16,7 @@ from hyperspectral_insight.utils.bayesian_tuning import make_objective
 def tune_lite_optuna(
     dataset_name: str,
     trials_per_job: int = 2,
-    out_dir: str = "results/hyper3dnetlite/new/optuna",
+    out_dir: str = "results/hyper3dnetlite/new/optuna/updated/",
     tuning_cv: int = 2,
     tuning_epochs: int = 30,
     max_samples: int = 2000,
