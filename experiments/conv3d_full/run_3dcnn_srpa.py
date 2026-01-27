@@ -87,7 +87,7 @@ def run_3dcnn_srpa(
         save_dir, f"{dataset_name}_3dcnn_srpa_{num_bands}bands_{n_splits}fold_cv.json"
     )
     out_bands = os.path.join(
-        save_dir, f"{dataset_name}_3dcnn_srpa_{num_bands}bands_{n_splits}_fold.cv.npy"
+        save_dir, f"{dataset_name}_3dcnn_srpa_{num_bands}bands_{n_splits}_fold.npy"
     )
 
     with open(out_json, "w") as f:

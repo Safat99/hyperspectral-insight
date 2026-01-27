@@ -10,10 +10,10 @@
 #SBATCH --time=06:00:00
 
 #SBATCH --array=0-14
-#SBATCH --output=slurm_logs/conv3d/conv3d_srpa/new/%x-%A_%a.out
-#SBATCH --error=slurm_logs/conv3d/conv3d_srpa/new/%x-%A_%a.err
+#SBATCH --output=slurm_logs/conv3d/conv3d_ibra_gss/new/%x-%A_%a.out
+#SBATCH --error=slurm_logs/conv3d/conv3d_ibra_gss/new/%x-%A_%a.err
 
-echo "===== Conv3D Full SRPA (Best Optuna Settings) Started ====="
+echo "===== Conv3D Full IBRA+GSS (Best Optuna Settings) Started ====="
 
 DATASETS=("indian_pines" "salinas" "pavia_university" "pavia_centre" "ksc")
 NUM_BANDS=(5 20 50)

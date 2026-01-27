@@ -20,7 +20,7 @@ def run_3dcnn_ssep(
     n_splits: int = 10,
     epochs: int = 50,
     batch_size: int = 4,
-    save_dir: str = "results/conv3d_full/ssep",
+    save_dir: str = "results/conv3d_full/ssep/new/",
     verbose: bool = True,
     max_samples_per_class: int = 2000,
     lr: float = 1e-3,
