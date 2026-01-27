@@ -20,7 +20,7 @@ def run_3dcnn_srpa(
     n_splits: int = 10,
     epochs: int = 50,
     batch_size: int = 16,
-    save_dir: str = "results/conv3d_full/srpa/",
+    save_dir: str = "results/conv3d_full/srpa/new/",
     verbose: bool = True,
     max_samples: int = 2000,
     lr: float = 5e-4,
@@ -57,7 +57,7 @@ def run_3dcnn_srpa(
         cube_sel, gt,
         win=patch_size,
         drop_label0=True,
-        max_samples_per_class=max_samples
+        max_samples_per_class=None,
     )
     print(f"  Patch shape: {X.shape}, #classes: {int(y.max()) + 1}")
 
@@ -76,7 +76,8 @@ def run_3dcnn_srpa(
         batch_size=batch_size,
         shuffle=True,
         random_state=0,
-        verbose=0,
+        verbose=1,
+        max_samples_per_class=max_samples,
     )
 
     # 7. Save
