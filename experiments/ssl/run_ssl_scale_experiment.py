@@ -7,259 +7,228 @@ from sklearn.model_selection import StratifiedShuffleSplit, StratifiedKFold
 from hyperspectral_insight.data.loaders import load_dataset
 from hyperspectral_insight.data.normalization import minmax_normalize
 from hyperspectral_insight.data.patches import extract_patches
-
 from hyperspectral_insight.band_selection.ibra_gss import select_bands_ibra_gss
 from hyperspectral_insight.models.hyper3dnet_lite import build_hyper3dnet_lite
 
 from hyperspectral_insight.ssl.pseudo_label import run_pseudo_label_ssl_fold
-
+from hyperspectral_insight.evaluation.cross_validation import cap_samples_per_class
 
 
 # ============================================================
-# Utility: stratified sample of dataset
+# Stratified subset sampling
 # ============================================================
 def stratified_sample(X, y, frac, random_state=0):
     if frac >= 1.0:
         return X, y
-
-    sss = StratifiedShuffleSplit(
-        n_splits=1,
-        test_size=1 - frac,
-        random_state=random_state,
-    )
+    sss = StratifiedShuffleSplit(n_splits=1, test_size=1 - frac, random_state=random_state)
     for idx, _ in sss.split(X, y):
         return X[idx], y[idx]
 
 
 # ============================================================
-# Utility: split subset into labeled + unlabeled
+# Split subset into labeled + unlabeled
 # ============================================================
 def make_labeled_unlabeled_split(X, y, labeled_ratio=0.2, random_state=0):
-    sss = StratifiedShuffleSplit(
-        n_splits=1,
-        test_size=1 - labeled_ratio,
-        random_state=random_state,
-    )
+    sss = StratifiedShuffleSplit(n_splits=1, test_size=1 - labeled_ratio, random_state=random_state)
     for lab_idx, unlab_idx in sss.split(X, y):
         return X[lab_idx], y[lab_idx], X[unlab_idx]
 
 
 # ============================================================
-# MAIN EXPERIMENT SCRIPT
+# MAIN SSL SCALING EXPERIMENT
 # ============================================================
 def run_ssl_scaling_experiment(
     dataset_name,
-    subset_fracs=[0.10, 0.20, 0.40, 0.60, 0.85],
+    subset_fracs=[0.10, 0.20, 0.40, 0.60, 0.80],
     labeled_ratio=0.20,
     num_bands=5,
-    patch_size=25,
-    n_splits=5,
+    n_splits=10,
     ssl_iters=3,
     confidence_thresh=0.9,
     epochs_baseline=30,
-    epochs_ssl_per_iter=15,
-    batch_size: int=128,
-    save_dir="results/scaling_ssl/updated/",
+    optimizer="adam",
+    patch_size=17,
+    batch_size=32,
+    lr=1e-4,
+    rho=0.95,
+    epsilon=1e-7,
+    max_samples_per_class=None,
     random_state=0,
-    lr: float = 5e-4,
-     max_samples_per_class: int = None,
+    save_dir="results/scaling_ssl/final/",
 ):
 
-    print("\n==============================================")
-    print("         SSL SCALING EXPERIMENT START")
-    print("==============================================\n")
+    print("\n========== SSL SCALING EXPERIMENT ==========")
+    print(f"Dataset: {dataset_name}")
+    print(f"Baseline epoch budget: {epochs_baseline}")
+    print(f"SSL iterations: {ssl_iters}")
 
     # ----------------------------------------------------------
-    # 1. Load + Normalize Dataset
+    # Load + Normalize
     # ----------------------------------------------------------
     cube, gt = load_dataset(dataset_name)
-    cube_norm = minmax_normalize(cube)
+    cube = minmax_normalize(cube)
 
     # ----------------------------------------------------------
-    # 2. Band Selection (unsupervised)
+    # IBRA+GSS Band Selection
     # ----------------------------------------------------------
-    print("Running IBRA+GSS band selection...")
     selected_bands = select_bands_ibra_gss(
-        cube=cube_norm,
+        cube=cube,
         nbands=num_bands,
         vif_threshold=10.0,
         max_distance=5.0,
         verbose=False,
     )
-    cube_sel = cube_norm[:, :, selected_bands]
+    cube = cube[:, :, selected_bands]
 
     # ----------------------------------------------------------
-    # 3. Patch Extraction
+    # Patch Extraction
     # ----------------------------------------------------------
-    # X_all, y_all = extract_patches(cube_sel, gt, patch_size)
     X_all, y_all = extract_patches(
-        cube_sel, gt,
+        cube, gt,
         win=patch_size,
         drop_label0=True,
-        max_samples_per_class=max_samples_per_class
+        max_samples_per_class=None
     )
-    
-    print(f"Total patches: {X_all.shape}, labels: {y_all.shape}")
 
     results_all = {}
 
     # ----------------------------------------------------------
-    # LOOP THROUGH SUBSET FRACTIONS
+    # Model Builder
+    # ----------------------------------------------------------
+    def model_fn(input_shape, n_classes):
+        if optimizer.lower() == "adam":
+            return build_hyper3dnet_lite(input_shape, n_classes, optimizer_name="adam", lr=lr)
+        else:
+            return build_hyper3dnet_lite(input_shape, n_classes, optimizer_name="adadelta", rho=rho, epsilon=epsilon)
+
+    # ----------------------------------------------------------
+    # Loop over labeled data fractions
     # ----------------------------------------------------------
     for frac in subset_fracs:
-        print(f"\n\n==============================")
-        print(f" SUBSET = {frac*100:.0f}%")
-        print("==============================")
+        print(f"\n===== Subset {int(frac*100)}% =====")
 
-        # ----------------------------------------------------------
-        # 4. Stratified sample
-        # ----------------------------------------------------------
-        X_sub, y_sub = stratified_sample(
-            X_all, y_all, frac=frac, random_state=random_state
-        )
-        print(f"Subset size: {len(X_sub)} samples")
-
-        # ----------------------------------------------------------
-        # Labeled/Unlabeled split
-        # ----------------------------------------------------------
+        X_sub, y_sub = stratified_sample(X_all, y_all, frac, random_state)
         X_lab, y_lab, X_unlab = make_labeled_unlabeled_split(
             X_sub, y_sub, labeled_ratio=labeled_ratio, random_state=random_state
         )
-        print(f"Labeled = {len(X_lab)}, Unlabeled = {len(X_unlab)}")
 
-        # ----------------------------------------------------------
-        # Prepare K-fold CV
-        # ----------------------------------------------------------
-        skf = StratifiedKFold(
-            n_splits=n_splits, shuffle=True, random_state=random_state
-        )
+        skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=random_state)
 
-        baseline_fold_scores = []
-        ssl_fold_scores = []
+        baseline_oa, baseline_f1 = [], []
+        ssl_oa, ssl_f1 = [], []
 
-        
-        def model_fn(input_shape, n_classes):
-            return build_hyper3dnet_lite(input_shape, n_classes, lr=lr)
-        
-        # ----------------------------------------------------------
-        # K-FOLD LOOP
-        # ----------------------------------------------------------
-        for fold_idx, (tr_idx, val_idx) in enumerate(skf.split(X_lab, y_lab), start=1):
+        for fold_idx, (tr_idx, val_idx) in enumerate(skf.split(X_lab, y_lab), 1):
             print(f"\n--- Fold {fold_idx}/{n_splits} ---")
 
-            X_lab_tr = X_lab[tr_idx]
-            y_lab_tr = y_lab[tr_idx]
-            X_lab_val = X_lab[val_idx]
-            y_lab_val = y_lab[val_idx]
+            X_train = X_lab[tr_idx]
+            y_train = y_lab[tr_idx]
+            X_val = X_lab[val_idx]
+            y_val = y_lab[val_idx]
 
-            # ----------------------------------------------------------
-            # BASELINE (supervised only)
-            # ----------------------------------------------------------
-            print("Training BASELINE...")
+            # Apply SAME class cap as supervised experiments
+            X_train, y_train = cap_samples_per_class(
+                X_train, y_train, max_samples_per_class, seed=fold_idx
+            )
+
+            # ---------------- Baseline ----------------
             baseline_res = run_pseudo_label_ssl_fold(
-                build_model_fn=model_fn,
-                X_labeled_fold=X_lab_tr,
-                y_labeled_fold=y_lab_tr,
-                X_unlabeled_pool=None,
-                X_test=X_lab_val,   # validation as test for CV
-                y_test=y_lab_val,
+                model_fn,
+                X_train,
+                y_train,
+                None,
+                X_val,
+                y_val,
                 epochs_per_iter=epochs_baseline,
                 batch_size=batch_size,
-                ssl_iters=1,                # no SSL iterations
-                confidence_thresh=None,     # not needed
+                ssl_iters=0,
+                confidence_thresh=None,
                 val_frac=0.0,
             )
-            baseline_fold_scores.append(baseline_res["OA_test"])
+            baseline_oa.append(baseline_res["OA_test"])
+            baseline_f1.append(baseline_res["F1_test"])
 
-            # ----------------------------------------------------------
-            # SSL MODEL (L + U)
-            # ----------------------------------------------------------
-            print("Training SSL...")
+            # ---------------- SSL ----------------
             ssl_res = run_pseudo_label_ssl_fold(
-                build_model_fn=model_fn,
-                X_labeled_fold=X_lab_tr,
-                y_labeled_fold=y_lab_tr,
-                X_unlabeled_pool=X_unlab,
-                X_test=X_lab_val,
-                y_test=y_lab_val,
-                epochs_per_iter=epochs_ssl_per_iter,
+                model_fn,
+                X_train,
+                y_train,
+                X_unlab,
+                X_val,
+                y_val,
+                epochs_per_iter=epochs_baseline,  # budget handled internally now
                 batch_size=batch_size,
                 ssl_iters=ssl_iters,
                 confidence_thresh=confidence_thresh,
                 val_frac=0.0,
             )
-            ssl_fold_scores.append(ssl_res["OA_test"])
-
-
-        # ----------------------------------------------------------
-        # Aggregate fold statistics (mean, std, CI)
-        # ----------------------------------------------------------
-        K = n_splits
-
-        # Baseline stats
-        mean_b = float(np.mean(baseline_fold_scores))
-        std_b  = float(np.std(baseline_fold_scores, ddof=1))
-        sem_b  = std_b / np.sqrt(K)
-        ci_b   = (mean_b - 1.96 * sem_b, mean_b + 1.96 * sem_b)
-
-        # SSL stats
-        mean_s = float(np.mean(ssl_fold_scores))
-        std_s  = float(np.std(ssl_fold_scores, ddof=1))
-        sem_s  = std_s / np.sqrt(K)
-        ci_s   = (mean_s - 1.96 * sem_s, mean_s + 1.96 * sem_s)
+            ssl_oa.append(ssl_res["OA_test"])
+            ssl_f1.append(ssl_res["F1_test"])
 
         results_all[frac] = {
-            "baseline_scores": baseline_fold_scores,
-            "ssl_scores": ssl_fold_scores,
+            "baseline_oa": baseline_oa,
+            "ssl_oa": ssl_oa,
+            "baseline_f1": baseline_f1,
+            "ssl_f1": ssl_f1,
 
-            "mean_baseline": mean_b,
-            "mean_ssl": mean_s,
+            "mean_baseline_oa": float(np.mean(baseline_oa)),
+            "std_baseline_oa": float(np.std(baseline_oa, ddof=1)),
+            "mean_ssl_oa": float(np.mean(ssl_oa)),
+            "std_ssl_oa": float(np.std(ssl_oa, ddof=1)),
 
-            "std_baseline": std_b,
-            "std_ssl": std_s,
+            "mean_baseline_f1": float(np.mean(baseline_f1)),
+            "std_baseline_f1": float(np.std(baseline_f1, ddof=1)),
+            "mean_ssl_f1": float(np.mean(ssl_f1)),
+            "std_ssl_f1": float(np.std(ssl_f1, ddof=1)),
 
-            "ci_baseline": ci_b,
-            "ci_ssl": ci_s,
-
-            "labeled_ratio": labeled_ratio,
             "selected_bands": list(map(int, selected_bands)),
         }
 
-        print("\nResults for this subset:")
-        print("  Baseline mean:", mean_b, "CI:", ci_b)
-        print("  SSL mean     :", mean_s, "CI:", ci_s)
+        print(f"Baseline F1 mean: {np.mean(baseline_f1):.4f}")
+        print(f"SSL F1 mean     : {np.mean(ssl_f1):.4f}")
 
-    
     os.makedirs(save_dir, exist_ok=True)
-    out_path = os.path.join(
-        save_dir, f"{dataset_name}_b{batch_size}_n{num_bands}_ssl_scaling_results.json"
-    )
+    out_path = os.path.join(save_dir, f"{dataset_name}_ssl_scaling_results.json")
 
     with open(out_path, "w") as f:
         json.dump(results_all, f, indent=4)
 
-    print(f"\nSaved ALL results to {out_path}\n")
+    print(f"\nSaved results to {out_path}")
     return results_all
 
 
-
-
+# ============================================================
+# CLI
+# ============================================================
 if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset", type=str, required=True)
-    parser.add_argument("--learning_rate", type=float, default=5e-4)
-    parser.add_argument("--batch_size", type=int, default=128)
-    parser.add_argument("--max_samples", type=int, default=2000)
+    parser.add_argument("--patch_size", type=int, required=True)
+    parser.add_argument("--batch_size", type=int, required=True)
+    parser.add_argument("--learning_rate", type=float, default=1e-4)
+    parser.add_argument("--optimizer", type=str, default="adam")
+    parser.add_argument("--rho", type=float, default=0.95)
+    parser.add_argument("--epsilon", type=float, default=1e-7)
     parser.add_argument("--n_splits", type=int, default=10)
-    
+    parser.add_argument("--ssl_iters", type=int, default=3)
+    parser.add_argument("--epochs_baseline", type=int, default=30)
+    parser.add_argument("--confidence_thresh", type=float, default=0.9)
+    parser.add_argument("--max_samples", type=int, default=None)
+
     args = parser.parse_args()
 
     run_ssl_scaling_experiment(
         dataset_name=args.dataset,
-        lr=args.learning_rate,
+        patch_size=args.patch_size,
         batch_size=args.batch_size,
-        max_samples_per_class=args.max_samples,
+        lr=args.learning_rate,
+        optimizer=args.optimizer,
+        rho=args.rho,
+        epsilon=args.epsilon,
         n_splits=args.n_splits,
+        ssl_iters=args.ssl_iters,
+        epochs_baseline=args.epochs_baseline,
+        confidence_thresh=args.confidence_thresh,
+        max_samples_per_class=args.max_samples,
     )
