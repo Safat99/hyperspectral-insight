@@ -1,6 +1,6 @@
 #!/bin/bash
-#SBATCH --job-name=conv3d_srpa
-#SBATCH --account=priority-binhaizhu
+#SBATCH --job-name=conv3d_ibra_gss
+#SBATCH --account=priority-johnsheppard
 #SBATCH --partition=gpupriority
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=1

@@ -3,3 +3,11 @@ datasets/
 __pycache__/
 *.pyc
 slurm_logs/
+# Experiment outputs
+results/
+*.npy
+*.npz
+*.json
+*.png
+*.csv
+
